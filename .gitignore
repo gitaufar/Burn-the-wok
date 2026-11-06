@@ -1,0 +1,22 @@
+# Visual Studio cache & per-user settings
+.vs/
+*.user
+*.suo
+*.db
+*.opendb
+*.VC.db
+ipch/
+
+# Build output (anchored so vendored libs such as External/**/lib/win/x86 are NOT ignored)
+/[Dd]ebug/
+/[Rr]elease/
+/x64/
+/*/[Dd]ebug/
+/*/[Rr]elease/
+/*/x64/
+
+# Misc
+*.log
+*.tlog
+Thumbs.db
+.DS_Store
