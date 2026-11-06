@@ -2,6 +2,6 @@
   <Configurations>
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Engine/Engine.vcxproj" />
-  <Project Path="Burn The Wok/Burn The Wok.vcxproj" />
+  <Project Path="Engine/Engine.vcxproj" Id="2e4dc4b6-6205-4369-82d1-aca2f8b49517" />
+  <Project Path="Burn The Wok/Burn The Wok.vcxproj" Id="589a2f5e-637d-47c9-baf5-e333251c06ea" />
 </Solution>

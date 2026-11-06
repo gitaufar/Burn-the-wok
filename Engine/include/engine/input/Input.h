@@ -45,8 +45,14 @@ private:
 
     std::array<bool, KeyCount> m_keysNow{};
     std::array<bool, KeyCount> m_keysPrev{};
+    // Keep short taps until a fixed update consumes them, even if down and up
+    // both arrive before SDL_GetKeyboardState is sampled.
+    std::array<bool, KeyCount> m_keysPressed{};
+    std::array<bool, KeyCount> m_keysReleased{};
     std::array<bool, MouseButtonCount> m_mouseNow{};
     std::array<bool, MouseButtonCount> m_mousePrev{};
+    std::array<bool, MouseButtonCount> m_mousePressed{};
+    std::array<bool, MouseButtonCount> m_mouseReleased{};
     Vec2 m_mousePosition{};
     int m_mouseWheel = 0;
 };

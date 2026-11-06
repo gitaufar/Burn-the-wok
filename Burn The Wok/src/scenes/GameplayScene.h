@@ -24,12 +24,18 @@ public:
 
 private:
     void UpdateCamera(float alpha);
+    void DrawOverlay(float alpha);
 
     std::unique_ptr<engine::Texture> m_atlas; // created in OnEnter (needs the GL context)
+    std::unique_ptr<engine::Texture> m_treeTexture;
+    std::unique_ptr<engine::Texture> m_minimap;
+    std::unique_ptr<engine::Texture> m_vignette;
+    engine::Rect m_treeSource;
     ForestMap m_map;
     Player m_player;
     engine::Camera2D m_camera;
     int m_zoom;
+    float m_time = 0.0f;
 };
 
 } // namespace game
