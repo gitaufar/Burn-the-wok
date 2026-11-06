@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Engine/Engine.vcxproj" />
+  <Project Path="Burn The Wok/Burn The Wok.vcxproj" />
+</Solution>

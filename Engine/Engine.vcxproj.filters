@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{ae0f9798-b0d0-51b6-ac40-c5e62705bd6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\engine">
+      <UniqueIdentifier>{b0ecea12-d100-5cd4-a026-4d24f8b90600}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\engine\core">
+      <UniqueIdentifier>{e20b372d-d53e-5dae-bb43-cb412eca274c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\engine\graphics">
+      <UniqueIdentifier>{7c10202c-8b8c-5eb7-8dc7-110fb72f67d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\engine\input">
+      <UniqueIdentifier>{7705f0f7-430c-59c2-be5c-055623f29415}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\engine\math">
+      <UniqueIdentifier>{d997519c-000b-511d-842b-0782e4e1fb57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{f9b68e1d-f15e-528e-929e-18b957e25455}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\core">
+      <UniqueIdentifier>{5d2c39c0-ed9f-597a-ba1d-0baaf09ac6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\graphics">
+      <UniqueIdentifier>{404de7b5-6b84-5201-9b16-1f070d2871a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\input">
+      <UniqueIdentifier>{f86e8feb-182f-5448-8e60-78b08e3817fe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\engine\core\Application.h">
+      <Filter>include\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\core\Log.h">
+      <Filter>include\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\core\Scene.h">
+      <Filter>include\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\core\SceneManager.h">
+      <Filter>include\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\Camera2D.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\Color.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\Image.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\Shader.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\SpriteBatch.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\Texture.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\graphics\Window.h">
+      <Filter>include\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\input\Input.h">
+      <Filter>include\engine\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\input\Keys.h">
+      <Filter>include\engine\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\math\Mat4.h">
+      <Filter>include\engine\math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\math\Rect.h">
+      <Filter>include\engine\math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\math\Vec2.h">
+      <Filter>include\engine\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\GL.h">
+      <Filter>src\graphics</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\core\Application.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\Log.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\SceneManager.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Camera2D.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Image.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Shader.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\SpriteBatch.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Texture.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Window.cpp">
+      <Filter>src\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\input\Input.cpp">
+      <Filter>src\input</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine.props" />
+  </ItemGroup>
+</Project>

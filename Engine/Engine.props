@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Import this file in any game project that uses the Engine (see "Burn The Wok.vcxproj").
+  It provides, in one place:
+    - the Engine's public include folder (Engine/include -> #include <engine/...>),
+    - the libraries the Engine needs at link time (SDL2, GLEW, OpenGL),
+    - a post-build step that copies SDL2.dll and glew32.dll next to the .exe.
+  The game project still needs a <ProjectReference> to Engine.vcxproj so Engine.lib is built and linked.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <EngineRoot>$(MSBuildThisFileDirectory)</EngineRoot>
+    <EngineExternalRoot>$(MSBuildThisFileDirectory)..\External\</EngineExternalRoot>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(EngineRoot)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(EngineExternalRoot)SDL\lib\win\x86;$(EngineExternalRoot)GLEW\lib\win\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <EngineRuntimeDll Include="$(EngineExternalRoot)SDL\lib\win\x86\SDL2.dll" />
+    <EngineRuntimeDll Include="$(EngineExternalRoot)GLEW\lib\win\x86\glew32.dll" />
+  </ItemGroup>
+  <Target Name="CopyEngineRuntimeDlls" AfterTargets="Build">
+    <Copy SourceFiles="@(EngineRuntimeDll)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
