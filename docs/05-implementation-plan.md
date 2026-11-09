@@ -39,12 +39,14 @@ Pembaruan visual 06/11/2026: aset pohon dipakai pada setiap tile pohon dengan uk
 
 - [ ] Entity/object system sederhana
 - [ ] Tilemap (pohon, tanah, sumber air)
-- [ ] Collision detection (AABB/lingkaran) + query area
+- [x] Collision detection (AABB/lingkaran) + query area _(09/11, branch `feat/add-collision`)_
 - [ ] Objek Api (intensitas/HP)
 - [ ] Penyemprot air: arah dari mouse, partikel/semprotan, collision dengan api
 - [ ] Sistem air: kapasitas, berkurang saat menyemprot, isi ulang di sumber air
 
 **DoD:** pemain bisa memadamkan api dan mengisi ulang air.
+
+Collision 09/11/2026: modul Engine baru `engine/physics/Collision` (generik): tes overlap AABB–AABB, lingkaran–lingkaran, lingkaran–AABB; `TilesOverlapping` / `OverlapsSolidTile` untuk query area di grid tile; `MoveAndSlide` untuk gerak kotak di grid tile (sumbu X lalu Y, berhenti rapat di tile padat dan meluncur di sepanjang dinding, setiap kolom/baris yang dilewati diperiksa sehingga tidak bisa menembus). Di Game: pohon dan air padat (`ForestMap::IsSolid`), pemain punya hitbox kaki 10×6 px, tombol **F3** menampilkan hitbox dan tile padat di sekitar pemain. Query siap pakai untuk anggota tim lain: `ForestMap::IsBlocked(area)`, `ForestMap::HasTileInArea(area, TileType::Water)` (deteksi di dekat kolam: perbesar hitbox pemain beberapa piksel), `engine::Overlaps(Circle, Rect)` untuk semprotan vs api. Verifikasi: build Debug & Release 0 warning; uji unit fungsi collision (21 pengecekan) dan simulasi 200.000 langkah acak di peta asli — pemain tidak pernah masuk tile padat; gim dijalankan tanpa crash. **Belum diuji manual:** rasa gerak saat menabrak pohon/kolam — mohon dicoba (F3 untuk melihat hitbox).
 
 ## Tahap 3 — Penyebaran api & perubahan lahan (13/11)
 
@@ -152,4 +154,6 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 | 06/11/2026 | Dependency pihak ke-3 di-vendor di repo, folder `External/` | Paling mudah untuk kolaborasi (clone → build tanpa instal); sama dengan pola contoh dosen |
 | 06/11/2026 | Repo git dibuat (branch `main`) + `.gitignore`; remote menyusul | Bukti commit bertahap (lihat 02) |
 | 06/11/2026 | Konvensi kode di `06-architecture.md` disetujui | Keputusan tim |
+| 09/11/2026 | Pembagian Tahap 2: collision dikerjakan di branch `feat/add-collision`; item Tahap 2 lainnya (entity, api, penyemprot, sistem air) dikerjakan anggota tim lain | Bagi tugas tim |
+| 09/11/2026 | Pohon dan air = tile padat; hanya kaki pemain (hitbox 10×6 px) yang bertabrakan. "Isi ulang di sumber air" ditafsirkan sebagai *berdiri di tepi* kolam (cek dengan `HasTileInArea`), bisa diubah tim | Air padat mencegah pemain berjalan di atas kolam; hitbox kaki terasa wajar untuk tampilan top-down |
 | 06/11/2026 | Contoh dosen = kode buku *Game Programming in C++* (Madhav); dipakai sebagai referensi, **kodenya tidak disalin** | Aturan engine sendiri |

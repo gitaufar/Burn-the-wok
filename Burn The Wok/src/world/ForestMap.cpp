@@ -5,6 +5,7 @@
 
 #include <engine/graphics/SpriteBatch.h>
 #include <engine/graphics/Texture.h>
+#include <engine/physics/Collision.h>
 
 #include <algorithm>
 #include <cmath>
@@ -58,6 +59,33 @@ TileType ForestMap::GetTile(int x, int y) const {
         return TileType::Tree;
     }
     return m_tiles[static_cast<std::size_t>(y) * m_width + x];
+}
+
+bool ForestMap::IsSolid(int x, int y) const {
+    const TileType tile = GetTile(x, y);
+    return tile == TileType::Tree || tile == TileType::Water;
+}
+
+bool ForestMap::IsBlocked(const engine::Rect& area) const {
+    return engine::OverlapsSolidTile(area, static_cast<float>(config::TileSize),
+                                     [this](int x, int y) { return IsSolid(x, y); });
+}
+
+bool ForestMap::HasTileInArea(const engine::Rect& area, TileType type) const {
+    const engine::TileRange tiles = engine::TilesOverlapping(area, static_cast<float>(config::TileSize));
+    for (int y = tiles.minY; y <= tiles.maxY; ++y) {
+        for (int x = tiles.minX; x <= tiles.maxX; ++x) {
+            if (GetTile(x, y) == type) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+engine::Rect ForestMap::GetTileRect(int x, int y) const {
+    const float ts = static_cast<float>(config::TileSize);
+    return {x * ts, y * ts, ts, ts};
 }
 
 engine::Rect ForestMap::GetBounds() const {
