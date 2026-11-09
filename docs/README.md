@@ -8,5 +8,6 @@ Dokumen ini adalah konteks proyek untuk anggota tim dan untuk Claude Code. Mulai
 4. [Characters & Assets](04-characters-assets.md)
 5. [Implementation Plan](05-implementation-plan.md)
 6. [Architecture](06-architecture.md)
+7. [Build & Distribusi](07-build-dan-distribusi.md) — membuat zip gim & mengirim ke dosen (Drive / itch.io)
 
 Sumber utama: *Laporan Project Akhir Pemrograman Gim — Dapur Tedduy (Iterasi 6)*. Jika ada konflik antara dokumen ini dan laporan, laporan terbaru yang benar; perbarui dokumen ini.

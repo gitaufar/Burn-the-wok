@@ -20,3 +20,6 @@ ipch/
 *.tlog
 Thumbs.db
 .DS_Store
+
+# Packaged builds (tools/package-release.ps1)
+/dist/

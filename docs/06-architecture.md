@@ -17,7 +17,8 @@
 | Grafis | **OpenGL 3.3 core profile** (shader GLSL 330) |
 | Window/input | SDL2 (core) |
 | Jenis output | `Burn The Wok.exe`. Debug: **SubSystem Console** (ada jendela log). Release: **SubSystem Windows** (tanpa konsol, entry point tetap `main` via `mainCRTStartup`) |
-| Opsi compiler lain | Warning Level 3, SDL checks, `/permissive-`, Unicode; Release: Whole Program Optimization |
+| Opsi compiler lain | Warning Level 3, SDL checks, `/permissive-`, Unicode; Release: Whole Program Optimization + **runtime statis `/MT`** (Engine & Game wajib sama) sehingga `.exe` tidak butuh Visual C++ Redistributable |
+| Distribusi | `tools\package-release.bat` → `dist\Burn-The-Wo_<tanggal>_<commit>.zip` (lihat `07-build-dan-distribusi.md`) |
 | Target OS | Windows (PC) |
 | Package manager | Tidak ada; dependency di-vendor di `External/` |
 
@@ -112,6 +113,10 @@ Burn The Wok/                         # root repo (git, branch main)
 │       ├── entities/  Player
 │       ├── world/     ForestMap      # peta tile placeholder
 │       └── scenes/    MenuScene, GameplayScene, ResultScene (Menang/Kalah)
+├── tools/
+│   ├── package-release.bat / .ps1   # build Release + buat zip di dist\ (lihat docs/07)
+│   └── package/CARA MAIN.txt        # petunjuk pemain yang ikut di zip
+├── dist/                             # hasil zip (tidak di-commit)
 ├── docs/
 ├── .gitignore
 └── CLAUDE.md

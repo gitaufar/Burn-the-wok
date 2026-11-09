@@ -144,6 +144,7 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 | 06/11/2026 | SubSystem: **Console** untuk Debug, **Windows** untuk Release | Debug butuh log; Release rapi untuk presentasi |
 | 06/11/2026 | Audio: SDL2 core + mixer & loader WAV buatan sendiri; **tanpa** FMOD/SDL_mixer. Decoder PNG: SOIL/stb_image setelah tanya dosen | Mixer audio wajib buatan sendiri (lihat 02) |
 | 06/11/2026 | Tahap 1 selesai; tile placeholder 16×16 px, zoom 3× | Demo berjalan; ukuran final menunggu aset |
+| 06/11/2026 | Distribusi = zip Windows (`tools/package-release.bat`), dikirim via Google Drive atau itch.io (downloadable). Release memakai runtime statis `/MT`. Tidak ada deploy web (Vercel dsb.) | Gim native Windows; dosen cukup ekstrak & jalankan tanpa install apa pun |
 | 06/11/2026 | Dependency pihak ke-3 di-vendor di repo, folder `External/` | Paling mudah untuk kolaborasi (clone → build tanpa instal); sama dengan pola contoh dosen |
 | 06/11/2026 | Repo git dibuat (branch `main`) + `.gitignore`; remote menyusul | Bukti commit bertahap (lihat 02) |
 | 06/11/2026 | Konvensi kode di `06-architecture.md` disetujui | Keputusan tim |

@@ -35,6 +35,7 @@ Rincian lengkap: [`docs/02-grading-constraints.md`](docs/02-grading-constraints.
 | `docs/04-characters-assets.md` | Karakter, item, gaya visual, spesifikasi aset |
 | `docs/05-implementation-plan.md` | 7 tahap implementasi + jadwal + status |
 | `docs/06-architecture.md` | Arsitektur engine & struktur proyek (isi/perbarui seiring kode) |
+| `docs/07-build-dan-distribusi.md` | Membuat zip rilis (`tools/package-release.bat`) & mengirim ke dosen |
 
 ## Cara kerja
 

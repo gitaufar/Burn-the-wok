@@ -1,0 +1,28 @@
+BURN THE WO
+Tim Dapur Tedduy - Pemrograman Gim, Informatika Universitas Brawijaya
+
+CARA MENJALANKAN
+1. Pastikan file zip sudah DIEKSTRAK (klik kanan zip > Extract All...).
+   Jangan menjalankan game langsung dari dalam zip.
+2. Buka folder hasil ekstrak, klik dua kali "Burn The Wo.exe".
+3. Jika muncul layar biru "Windows protected your PC":
+   klik "More info" lalu "Run anyway".
+   (Muncul karena game belum punya sertifikat digital berbayar, bukan karena virus.)
+
+KONTROL
+  Enter / Spasi   : mulai dari menu
+  W A S D / panah : bergerak
+  Roda mouse      : zoom
+  Esc             : kembali ke menu / keluar dari menu
+  F1 / F2         : (sementara, untuk uji) langsung ke layar menang / kalah
+
+KEBUTUHAN SISTEM
+  - Windows 10 atau 11 (32-bit atau 64-bit)
+  - Kartu grafis yang mendukung OpenGL 3.3 (hampir semua laptop sejak 2012)
+
+JIKA ADA MASALAH
+  - "SDL2.dll / glew32.dll was not found": zip belum diekstrak, atau file .dll
+    terpisah dari .exe. Semua file harus tetap satu folder.
+  - "OpenGL 3.3 context creation failed": update driver kartu grafis.
+
+Folder "licenses" berisi lisensi library pihak ke-3 (SDL2, GLEW) yang dipakai engine.
