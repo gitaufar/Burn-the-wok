@@ -13,6 +13,7 @@ namespace game {
 
 // Stage 1 demo: the ranger walks around a placeholder forest map.
 // WASD/arrows = move, mouse wheel = zoom, F1/F2 = jump to win/lose screen (debug),
+// F3 = show hitboxes and solid tiles (debug),
 // Esc = back to the menu (a real pause screen comes in Stage 6).
 class GameplayScene : public engine::Scene {
 public:
@@ -25,6 +26,7 @@ public:
 private:
     void UpdateCamera(float alpha);
     void DrawOverlay(float alpha);
+    void DrawCollisionDebug(float alpha); // inside the world batch (camera space)
 
     std::unique_ptr<engine::Texture> m_atlas; // created in OnEnter (needs the GL context)
     std::unique_ptr<engine::Texture> m_treeTexture;
@@ -36,6 +38,7 @@ private:
     engine::Camera2D m_camera;
     int m_zoom;
     float m_time = 0.0f;
+    bool m_showCollision = false; // F3
 };
 
 } // namespace game

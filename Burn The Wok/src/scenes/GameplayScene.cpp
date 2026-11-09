@@ -8,6 +8,7 @@
 
 #include <engine/core/Application.h>
 #include <engine/graphics/Image.h>
+#include <engine/physics/Collision.h>
 
 #include <algorithm>
 #include <cmath>
@@ -58,7 +59,7 @@ void GameplayScene::OnEnter() {
 
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
                                " - Gameplay | WASD/panah: gerak, roda mouse: zoom, "
-                               "F1: menang, F2: kalah, Esc: menu");
+                               "F1: menang, F2: kalah, F3: hitbox, Esc: menu");
     App().GetWindow().SetClearColor(Color::FromHex(0x1B3027));
 }
 
@@ -84,7 +85,36 @@ void GameplayScene::Update(float dt) {
         m_zoom = std::clamp(m_zoom + wheel, config::MinZoom, config::MaxZoom);
     }
 
-    m_player.Update(input, dt, m_map.GetBounds());
+    // Debug: show hitboxes and solid tiles (useful when tuning collision).
+    if (input.IsKeyPressed(Key::F3)) {
+        m_showCollision = !m_showCollision;
+    }
+
+    m_player.Update(input, dt, m_map);
+}
+
+void GameplayScene::DrawCollisionDebug(float alpha) {
+    engine::SpriteBatch& batch = App().GetSpriteBatch();
+
+    // Solid tiles near the player only, so the overlay stays readable.
+    const Vec2 player = m_player.GetRenderPosition(alpha);
+    const float ts = static_cast<float>(config::TileSize);
+    const engine::Rect nearby{player.x - 4 * ts, player.y - 4 * ts, 8 * ts, 8 * ts};
+    const engine::TileRange tiles = engine::TilesOverlapping(nearby, ts);
+    for (int y = tiles.minY; y <= tiles.maxY; ++y) {
+        for (int x = tiles.minX; x <= tiles.maxX; ++x) {
+            if (m_map.IsSolid(x, y)) {
+                batch.DrawRectOutline(m_map.GetTileRect(x, y), 0.5f, Color::FromHex(0xE0503C, 200));
+            }
+        }
+    }
+
+    // Draw the hitbox where the sprite is drawn (interpolated), not at the raw position.
+    engine::Rect hitbox = m_player.GetHitbox();
+    hitbox.x += player.x - m_player.GetPosition().x;
+    hitbox.y += player.y - m_player.GetPosition().y;
+    batch.DrawRect(hitbox, Color::FromHex(0x4FD1E8, 90));
+    batch.DrawRectOutline(hitbox, 0.5f, Color::FromHex(0x4FD1E8, 230));
 }
 
 void GameplayScene::UpdateCamera(float alpha) {
@@ -141,6 +171,10 @@ void GameplayScene::Draw(float alpha) {
         batch.DrawRect({hovered.x, hovered.y, 1, 4}, marker);
         batch.DrawRect({hovered.Right() - 4, hovered.Bottom() - 1, 4, 1}, marker);
         batch.DrawRect({hovered.Right() - 1, hovered.Bottom() - 4, 1, 4}, marker);
+    }
+
+    if (m_showCollision) {
+        DrawCollisionDebug(alpha);
     }
 
     batch.End();

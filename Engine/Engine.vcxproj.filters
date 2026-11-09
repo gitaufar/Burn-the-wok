@@ -19,6 +19,9 @@
     <Filter Include="include\engine\math">
       <UniqueIdentifier>{d997519c-000b-511d-842b-0782e4e1fb57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\engine\physics">
+      <UniqueIdentifier>{3b8f0c51-6a2e-4d7b-9e14-2c5d8a7f1e03}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{f9b68e1d-f15e-528e-929e-18b957e25455}</UniqueIdentifier>
     </Filter>
@@ -30,6 +33,9 @@
     </Filter>
     <Filter Include="src\input">
       <UniqueIdentifier>{f86e8feb-182f-5448-8e60-78b08e3817fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\physics">
+      <UniqueIdentifier>{9a4e6d27-1f3c-4b85-a0d2-7e6b5c3f8d14}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +87,9 @@
     <ClInclude Include="include\engine\math\Vec2.h">
       <Filter>include\engine\math</Filter>
     </ClInclude>
+    <ClInclude Include="include\engine\physics\Collision.h">
+      <Filter>include\engine\physics</Filter>
+    </ClInclude>
     <ClInclude Include="src\graphics\GL.h">
       <Filter>src\graphics</Filter>
     </ClInclude>
@@ -115,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="src\input\Input.cpp">
       <Filter>src\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\Collision.cpp">
+      <Filter>src\physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

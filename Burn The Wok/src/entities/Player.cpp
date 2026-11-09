@@ -2,12 +2,13 @@
 
 #include "GameConfig.h"
 #include "art/PlaceholderArt.h"
+#include "world/ForestMap.h"
 
 #include <engine/graphics/SpriteBatch.h>
 #include <engine/graphics/Texture.h>
 #include <engine/input/Input.h>
+#include <engine/physics/Collision.h>
 
-#include <algorithm>
 #include <cmath>
 
 namespace game {
@@ -15,7 +16,7 @@ namespace game {
 using engine::Key;
 using engine::Vec2;
 
-void Player::Update(const engine::Input& input, float dt, const engine::Rect& walkableArea) {
+void Player::Update(const engine::Input& input, float dt, const ForestMap& map) {
     m_previousPosition = m_position;
 
     Vec2 direction{};
@@ -29,12 +30,17 @@ void Player::Update(const engine::Input& input, float dt, const engine::Rect& wa
     if (m_moving) {
         UpdateFacing(direction);
         // Normalize so diagonal movement is not ~41% faster than straight movement.
-        m_position += direction.Normalized() * config::PlayerSpeed * dt;
+        const Vec2 delta = direction.Normalized() * config::PlayerSpeed * dt;
+        const engine::Rect hitbox = GetHitbox();
+        const engine::MoveResult moved = engine::MoveAndSlide(
+            hitbox, delta, static_cast<float>(config::TileSize),
+            [&map](int x, int y) { return map.IsSolid(x, y); });
+        m_position += moved.box.Position() - hitbox.Position();
     }
+}
 
-    const float half = config::TileSize * 0.5f;
-    m_position.x = std::clamp(m_position.x, walkableArea.Left() + half, walkableArea.Right() - half);
-    m_position.y = std::clamp(m_position.y, walkableArea.Top() + half, walkableArea.Bottom() - half);
+engine::Rect Player::GetHitbox() const {
+    return {m_position.x - HitboxWidth * 0.5f, m_position.y + HitboxOffsetY, HitboxWidth, HitboxHeight};
 }
 
 void Player::UpdateFacing(Vec2 direction) {
