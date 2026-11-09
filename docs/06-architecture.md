@@ -45,7 +45,7 @@ Diverifikasi 06/11/2026: kedua konfigurasi sukses, 0 warning.
 
 - IDE: F5 (debug) / Ctrl+F5. Working directory saat debug = folder `Burn The Wok/` (penting untuk path aset nanti).
 - Manual: `Debug\Burn The Wok.exe` atau `Release\Burn The Wok.exe` (relatif ke root repo). `SDL2.dll` dan `glew32.dll` otomatis disalin ke folder itu saat build (target `CopyEngineRuntimeDlls` di `Engine/Engine.props`).
-- Kontrol demo Tahap 1: Enter/Spasi = mulai, WASD/panah = gerak, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), Esc = kembali ke menu / keluar dari menu.
+- Kontrol demo: Enter/Spasi = mulai, WASD/panah = gerak, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), F3 = tampilkan hitbox & tile padat (debug), Esc = kembali ke menu / keluar dari menu.
 
 ## Dependency yang disetujui
 
@@ -102,7 +102,8 @@ Burn The Wok/                         # root repo (git, branch main)
 │   │   ├── core/      Application, Scene, SceneManager, Log
 │   │   ├── graphics/  Window, Shader, Texture, Image, SpriteBatch, Camera2D, Color
 │   │   ├── input/     Input, Keys
-│   │   └── math/      Vec2, Rect, Mat4
+│   │   ├── math/      Vec2, Rect, Mat4
+│   │   └── physics/   Collision (overlap AABB/lingkaran, query tile, MoveAndSlide)
 │   └── src/                          # implementasi .cpp (struktur sama) + GL.h (internal)
 ├── Burn The Wok/                     # Proyek Game (.exe): referensi Engine
 │   ├── Burn The Wok.vcxproj
@@ -122,7 +123,7 @@ Burn The Wok/                         # root repo (git, branch main)
 └── CLAUDE.md
 ```
 
-Folder yang akan ditambah sesuai tahap: `engine/physics` (T2), `engine/ai` (T4), `engine/ui`, `engine/audio`, `engine/particles` (T6); di Game: `systems/` (T2–T5), `config/` data stage (T5), `assets/` (saat aset tersedia).
+Folder yang akan ditambah sesuai tahap: `engine/ai` (T4), `engine/ui`, `engine/audio`, `engine/particles` (T6); di Game: `systems/` (T2–T5), `config/` data stage (T5), `assets/` (saat aset tersedia).
 
 Aturan dependensi: `Game → Engine`. Dilarang `Engine → Game`. Ditegakkan oleh build: proyek Engine tidak punya include path ke folder Game.
 
@@ -139,6 +140,7 @@ Aturan dependensi: `Game → Engine`. Dilarang `Engine → Game`. Ditegakkan ole
 | `graphics/Camera2D` | Kamera 2D | Posisi = titik tengah layar, zoom = piksel layar per unit dunia; proyeksi ortografis y-ke-bawah; `ScreenToWorld`/`WorldToScreen`; pixel snapping |
 | `input/Input` | Keyboard & mouse | Down/Pressed/Released. "Previous" diperbarui per **fixed update**, bukan per frame, sehingga tombol tidak terbaca dua kali/terlewat |
 | `math/*` | Vec2, Rect, Mat4 | Header-only |
+| `physics/Collision` (T2) | Tes overlap, query tile, gerak di grid tile | Engine tidak tahu arti tile; Game menjawab "apakah tile (x, y) padat?" lewat callback. Tepi yang hanya bersentuhan tidak dihitung overlap (sama dengan `Rect::Contains`). `MoveAndSlide`: sumbu X dulu lalu Y (meluncur di dinding), cek semua kolom/baris yang dilewati (anti tembus), kotak yang sudah di dalam tile padat tetap bisa keluar |
 
 ## Prinsip desain engine
 
@@ -184,6 +186,6 @@ Application loop ───┤
 - 06/11/2026 — `SDL_MAIN_HANDLED` + `SDL_SetMainReady()`: memakai `main()` biasa, sehingga `SDL2main.lib` tidak diperlukan dan Release bisa memakai SubSystem Windows dengan entry point `mainCRTStartup`.
 - 06/11/2026 — Tekstur Tahap 1 dibuat lewat kode (`Image` → `Texture`), karena decoder PNG belum disetujui. Nanti loader PNG cukup menghasilkan `engine::Image`; sisa pipeline tidak berubah.
 - 06/11/2026 — Ukuran tile placeholder 16×16 px, zoom default 3× (`GameConfig.h`). Belum final; menunggu aset.
-- 06/11/2026 — Belum ada collision: pemain bisa berjalan menembus pohon/air (Tahap 2).
+- 09/11/2026 — Collision tile: pohon & air padat, hitbox pemain hanya kaki (10×6 px di bawah titik tengah sprite). Tile di luar peta dihitung pohon, jadi tepi peta otomatis padat (clamp ke batas peta dihapus).
 
 _(Tambahkan di sini seiring pengembangan. Salin ringkasannya ke laporan bab arsitektur.)_
