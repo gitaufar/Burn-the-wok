@@ -8,6 +8,7 @@
 #include <engine/input/Input.h>
 
 #include <algorithm>
+#include <cmath>
 
 namespace game {
 
@@ -23,7 +24,9 @@ void Player::Update(const engine::Input& input, float dt, const engine::Rect& wa
     if (input.IsKeyDown(Key::W) || input.IsKeyDown(Key::Up)) direction.y -= 1.0f;
     if (input.IsKeyDown(Key::S) || input.IsKeyDown(Key::Down)) direction.y += 1.0f;
 
-    if (direction != Vec2{}) {
+    m_moving = direction != Vec2{};
+    m_walkTime = m_moving ? m_walkTime + dt : 0.0f;
+    if (m_moving) {
         UpdateFacing(direction);
         // Normalize so diagonal movement is not ~41% faster than straight movement.
         m_position += direction.Normalized() * config::PlayerSpeed * dt;
@@ -72,7 +75,9 @@ void Player::Draw(engine::SpriteBatch& batch, const engine::Texture& atlas, floa
 
     const Vec2 center = GetRenderPosition(alpha);
     const float size = static_cast<float>(config::TileSize);
-    batch.Draw(atlas, {center.x - size * 0.5f, center.y - size * 0.5f, size, size},
+    batch.Draw(atlas, {center.x - 5, center.y + 5, 10, 4}, GetSpriteSource(SpriteId::Shadow));
+    const float bob = m_moving ? std::round(std::sin(m_walkTime * 16.0f)) : 0.0f;
+    batch.Draw(atlas, {center.x - size * 0.5f, center.y - size * 0.5f + bob, size, size},
                GetSpriteSource(sprite));
 }
 

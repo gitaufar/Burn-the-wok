@@ -36,6 +36,8 @@ private:
     engine::Vec2 m_position;         // center of the sprite, world pixels
     engine::Vec2 m_previousPosition; // position at the previous update (for interpolation)
     Facing m_facing = Facing::Down;
+    float m_walkTime = 0.0f;
+    bool m_moving = false;
 };
 
 } // namespace game

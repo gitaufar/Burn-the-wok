@@ -1,8 +1,10 @@
 #pragma once
 
 #include "engine/graphics/Color.h"
+#include "engine/math/Rect.h"
 
 #include <cstdint>
+#include <filesystem>
 #include <vector>
 
 namespace engine {
@@ -14,6 +16,9 @@ class Image {
 public:
     Image() = default;
     Image(int width, int height, Color fill = Color::Transparent());
+    static Image LoadFromFile(const std::filesystem::path& path);
+    // Visible pixel bounds, excluding transparent padding around imported art.
+    Rect GetContentBounds(std::uint8_t minAlpha = 1) const;
 
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }

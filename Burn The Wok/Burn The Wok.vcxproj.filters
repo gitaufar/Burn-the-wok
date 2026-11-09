@@ -24,6 +24,9 @@
     <ClInclude Include="src\art\PlaceholderArt.h">
       <Filter>src\art</Filter>
     </ClInclude>
+    <ClInclude Include="src\art\PixelText.h">
+      <Filter>src\art</Filter>
+    </ClInclude>
     <ClInclude Include="src\entities\Player.h">
       <Filter>src\entities</Filter>
     </ClInclude>
@@ -62,5 +65,12 @@
     <ClCompile Include="src\world\ForestMap.cpp">
       <Filter>src\world</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\ui\.gitkeep" />
+    <None Include="assets\audio\.gitkeep" />
+    <None Include="assets\fonts\.gitkeep" />
+    <None Include="assets\environment\.gitkeep" />
+    <None Include="assets\characters\.gitkeep" />
   </ItemGroup>
 </Project>

@@ -25,13 +25,15 @@ public:
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
     TileType GetTile(int x, int y) const; // outside the map counts as Tree
+    bool IsPath(int x, int y) const;
 
     engine::Rect GetBounds() const;  // in world pixels
     engine::Vec2 GetCenter() const;  // in world pixels
 
     // Only tiles inside visibleArea are drawn.
     void Draw(engine::SpriteBatch& batch, const engine::Texture& atlas,
-              const engine::Rect& visibleArea) const;
+              const engine::Texture& treeTexture, const engine::Rect& treeSource,
+              const engine::Rect& visibleArea, float time = 0.0f) const;
 
 private:
     int m_width = 0;

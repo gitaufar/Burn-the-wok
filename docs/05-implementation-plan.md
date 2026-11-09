@@ -31,6 +31,10 @@ Fokus: fondasi engine, belum gameplay.
 
 Verifikasi 06/11/2026: build Debug & Release 0 warning; dijalankan di GPU NVIDIA (OpenGL 3.3 core); diuji: Menu → Gameplay (Enter) → Menang (F1) → Menu (Enter) → keluar (Esc), pemain bergerak ke kanan & kamera mengikuti, build Release jalan tanpa konsol. **Belum diuji otomatis:** zoom roda mouse, F2 (Kalah), resize jendela, GPU Intel/AMD — mohon dicoba manual oleh tim.
 
+Perbaikan startup 06/11/2026: menu awal kini menampilkan judul, tombol **MULAI** yang bisa diklik, dan petunjuk keyboard di layar. Input menyimpan event tekan/lepas sampai fixed update agar ketukan singkat tidak terlewat; Enter numpad juga didukung di menu dan layar hasil. Build Debug dan Release berhasil. Pemeriksaan runtime lokal dengan pasangan event tekan/lepas dalam satu polling: Enter, Spasi, Enter numpad, dan klik MULAI semuanya berhasil berpindah ke Gameplay; tidak ditemukan error OpenGL pada pemeriksaan tersebut. Harness pemeriksaan disimpan di folder output `Debug/` yang diabaikan Git.
+
+Pembaruan visual 06/11/2026: aset pohon dipakai pada setiap tile pohon dengan ukuran maksimal 16x16 piksel dunia; jumlah dan lokasi tile pohon mengikuti generator peta yang sama. Tampilan gameplay mendapat variasi rumput, bunga, jalur tanah dekoratif, batu, semak, tanaman tepian kolam, riak air animasi, bayangan pohon/pemain, partikel daun, dan vignette tipis. Overlay menampilkan minimap aktual, area kamera, posisi pemain, koordinat, zoom, serta petunjuk kontrol. Sprite penjaga hutan mendapat palet lebih jelas dan gerakan naik-turun saat berjalan. Detail tambahan dibuat lewat kode dengan aset PNG yang sudah ada, tanpa dependency baru.
+
 ## Tahap 2 — Collision & mekanik air/api (09/11)
 
 - [ ] Entity/object system sederhana

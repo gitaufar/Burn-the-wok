@@ -15,6 +15,17 @@ enum class SpriteId : int {
     PlayerUp,
     PlayerLeft,
     PlayerRight,
+    GrassSoft,
+    GrassDense,
+    Dirt,
+    Rock,
+    Shrub,
+    Reeds,
+    Shadow,
+    Leaf,
+    WaterRipple,
+    WaterRippleTwo,
+    WaterRippleThree,
     Count
 };
 
