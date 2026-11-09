@@ -23,7 +23,7 @@ void ResultScene::OnEnter() {
 
 void ResultScene::Update(float /*dt*/) {
     const engine::Input& input = App().GetInput();
-    if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::Space) ||
+    if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) || input.IsKeyPressed(Key::Space) ||
         input.IsKeyPressed(Key::Escape)) {
         App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
     }

@@ -21,12 +21,12 @@ bool Input::IsKeyDown(Key key) const {
 
 bool Input::IsKeyPressed(Key key) const {
     const int i = static_cast<int>(key);
-    return IsValidKey(key) && m_keysNow[i] && !m_keysPrev[i];
+    return IsValidKey(key) && (m_keysPressed[i] || (m_keysNow[i] && !m_keysPrev[i]));
 }
 
 bool Input::IsKeyReleased(Key key) const {
     const int i = static_cast<int>(key);
-    return IsValidKey(key) && !m_keysNow[i] && m_keysPrev[i];
+    return IsValidKey(key) && (m_keysReleased[i] || (!m_keysNow[i] && m_keysPrev[i]));
 }
 
 bool Input::IsMouseDown(MouseButton button) const {
@@ -35,15 +35,34 @@ bool Input::IsMouseDown(MouseButton button) const {
 
 bool Input::IsMousePressed(MouseButton button) const {
     const int i = static_cast<int>(button);
-    return m_mouseNow[i] && !m_mousePrev[i];
+    return m_mousePressed[i] || (m_mouseNow[i] && !m_mousePrev[i]);
 }
 
 bool Input::IsMouseReleased(MouseButton button) const {
     const int i = static_cast<int>(button);
-    return !m_mouseNow[i] && m_mousePrev[i];
+    return m_mouseReleased[i] || (!m_mouseNow[i] && m_mousePrev[i]);
 }
 
 void Input::HandleEvent(const SDL_Event& event) {
+    if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+        const int i = static_cast<int>(event.key.keysym.scancode);
+        if (i >= 0 && i < KeyCount) {
+            if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
+                m_keysPressed[i] = true;
+            } else if (event.type == SDL_KEYUP) {
+                m_keysReleased[i] = true;
+            }
+        }
+    } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+        const int i = event.button.button;
+        if (i > 0 && i < MouseButtonCount) {
+            if (event.type == SDL_MOUSEBUTTONDOWN) {
+                m_mousePressed[i] = true;
+            } else {
+                m_mouseReleased[i] = true;
+            }
+        }
+    }
     // The wheel has no "state" to poll, only events, so accumulate it here.
     if (event.type == SDL_MOUSEWHEEL) {
         m_mouseWheel += event.wheel.y;
@@ -72,6 +91,10 @@ void Input::CaptureState() {
 void Input::EndUpdate() {
     m_keysPrev = m_keysNow;
     m_mousePrev = m_mouseNow;
+    m_keysPressed.fill(false);
+    m_keysReleased.fill(false);
+    m_mousePressed.fill(false);
+    m_mouseReleased.fill(false);
     m_mouseWheel = 0;
 }
 

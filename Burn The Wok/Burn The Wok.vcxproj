@@ -87,6 +87,7 @@
   <ItemGroup>
     <ClInclude Include="src\GameConfig.h" />
     <ClInclude Include="src\art\PlaceholderArt.h" />
+    <ClInclude Include="src\art\PixelText.h" />
     <ClInclude Include="src\entities\Player.h" />
     <ClInclude Include="src\scenes\GameplayScene.h" />
     <ClInclude Include="src\scenes\MenuScene.h" />
@@ -108,7 +109,25 @@
       <Project>{2e4dc4b6-6205-4369-82d1-aca2f8b49517}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\audio\.gitkeep" />
+    <None Include="assets\characters\.gitkeep" />
+    <None Include="assets\environment\.gitkeep" />
+    <None Include="assets\fonts\.gitkeep" />
+    <None Include="assets\ui\.gitkeep" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemGroup>
+    <Image Include="assets\**\*.png" />
+  </ItemGroup>
+  <Target Name="CopyGameAssets" AfterTargets="Build">
+    <ItemGroup>
+      <GameAsset Include="$(ProjectDir)assets\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GameAsset)"
+          DestinationFiles="@(GameAsset->'$(OutDir)assets\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

@@ -24,6 +24,7 @@ enum class Key : int {
     Left = 80,
     Down = 81,
     Up = 82,
+    NumpadEnter = 88,
 
     LeftCtrl = 224,
     LeftShift = 225,
