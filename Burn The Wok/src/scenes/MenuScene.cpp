@@ -1,6 +1,7 @@
-﻿#include "scenes/MenuScene.h"
+#include "scenes/MenuScene.h"
 
 #include "GameConfig.h"
+#include "art/PixelText.h"
 #include "scenes/GameplayScene.h"
 
 #include <engine/core/Application.h>
@@ -20,48 +21,14 @@ using engine::Key;
 
 namespace {
 
-// Local 5x7 labels keep the startup menu readable without a font dependency.
-constexpr unsigned char Glyphs[26][7] = {
-    {14,17,17,31,17,17,17}, {30,17,17,30,17,17,30},
-    {14,17,16,16,16,17,14}, {30,17,17,17,17,17,30},
-    {31,16,16,30,16,16,31}, {31,16,16,30,16,16,16},
-    {14,17,16,23,17,17,14}, {17,17,17,31,17,17,17},
-    {31,4,4,4,4,4,31}, {7,2,2,2,18,18,12},
-    {17,18,20,24,20,18,17}, {16,16,16,16,16,16,31},
-    {17,27,21,21,17,17,17}, {17,25,21,19,17,17,17},
-    {14,17,17,17,17,17,14}, {30,17,17,30,16,16,16},
-    {14,17,17,17,21,18,13}, {30,17,17,30,20,18,17},
-    {15,16,16,14,1,1,30}, {31,4,4,4,4,4,4},
-    {17,17,17,17,17,17,14}, {17,17,17,17,17,10,4},
-    {17,17,17,21,21,21,10}, {17,17,10,4,10,17,17},
-    {17,17,10,4,4,4,4}, {31,1,2,4,8,16,31}
-};
-
-void DrawLabel(engine::SpriteBatch& batch, std::string_view text, float centerX,
-               float y, float scale, Color color) {
-    float x = centerX - (static_cast<float>(text.size()) * 6.0f - 1.0f) * scale * 0.5f;
-    for (char ch : text) {
-        if (ch >= 'A' && ch <= 'Z') {
-            for (int row = 0; row < 7; ++row) {
-                for (int col = 0; col < 5; ++col) {
-                    if (Glyphs[ch - 'A'][row] & (1 << (4 - col))) {
-                        batch.DrawRect({x + col * scale, y + row * scale, scale, scale}, color);
-                    }
-                }
-            }
-        }
-        x += 6.0f * scale;
-    }
-}
-
 float MenuScale(engine::Vec2 size) {
     return std::max(0.01f, std::min(size.x / 1280.0f, size.y / 720.0f));
 }
 
 engine::Rect StartButton(engine::Vec2 size) {
     const float s = MenuScale(size);
-    return {size.x * 0.5f - 164.0f * s, size.y * 0.5f + 150.0f * s,
-            328.0f * s, 64.0f * s};
+    return {size.x * 0.5f + 90.0f * s, size.y * 0.5f + 142.0f * s,
+            350.0f * s, 72.0f * s};
 }
 
 void DrawForestTree(engine::SpriteBatch& batch, float x, float ground, float height,
@@ -135,7 +102,7 @@ void MenuScene::Draw(float /*alpha*/) {
              static_cast<std::uint8_t>(17 + 9 * t), 255});
     }
     batch.Draw(*m_glow, {c.x - 560.0f * s, c.y - 370.0f * s, 1120.0f * s, 700.0f * s},
-               Color::FromHex(0xBC6833));
+               Color::FromHex(0x738650));
 
     for (int layer = 0; layer < 2; ++layer) {
         const float spacing = (layer == 0 ? 105.0f : 155.0f) * s;
@@ -149,7 +116,7 @@ void MenuScene::Draw(float /*alpha*/) {
     batch.DrawRect({0.0f, ground + 34.0f * s, size.x,
                     std::max(0.0f, size.y - ground - 34.0f * s)}, Color::FromHex(0x091D18));
 
-    for (int i = 0; i < 38; ++i) {
+    for (int i = 0; i < 16; ++i) {
         const float progress = std::fmod(m_time * (0.045f + (i % 5) * 0.008f) + i * 0.137f, 1.0f);
         const float x = c.x + (static_cast<float>((i * 97) % 1100) - 550.0f) * s +
                         std::sin(m_time * 0.7f + i) * 14.0f * s;
@@ -159,49 +126,75 @@ void MenuScene::Draw(float /*alpha*/) {
             static_cast<std::uint8_t>(std::sin(progress * 3.14159265f) * 150.0f)));
     }
 
-    DrawLabel(batch, "SELAMATKAN HUTAN", c.x, c.y - 292.0f * s, 2.0f * s,
-              Color::FromHex(0xA6B99A));
-    batch.DrawRect({c.x - 165.0f * s, c.y - 267.0f * s, 330.0f * s, s},
-                    Color::FromHex(0xA27840).WithAlpha(100));
+    const Color cream = Color::FromHex(0xFFF0CB);
+    const Color paper = Color::FromHex(0xE8D9AF);
+    const Color shade = Color::FromHex(0xC7B58A);
+    const Color ink = Color::FromHex(0x3B4031);
+    const Color moss = Color::FromHex(0x738650);
+    auto rect = [&](float x, float y, float width, float height, Color color) {
+        batch.DrawRect({c.x + x*s, c.y + y*s, width*s, height*s}, color);
+    };
+    auto label = [&](std::string_view value, float x, float y, float scale, Color color) {
+        art::DrawPixelText(batch, value, c.x+x*s, c.y+y*s, scale*s, color);
+    };
 
+    // Quiet editorial header, using the ranger badge from the in-game HUD.
+    rect(-578, -310, 34, 40, moss);
+    rect(-574, -270, 26, 4, moss);
+    rect(-563, -295, 4, 20, cream);
+    rect(-567, -302, 12, 5, cream);
+    rect(-572, -297, 22, 6, cream);
+    rect(-575, -291, 28, 5, cream);
+    label("KAWASAN KONSERVASI", -528, -303, 2, shade);
+    label("HUTAN TROPIS", -528, -282, 2, cream);
+    label("TIM DAPUR TEDDUY", 398, -295, 2, shade);
+    rect(-578, -245, 1156, 1, Color::FromHex(0xC7B58A, 55));
     const float logoWidth = 920.0f * s;
     const float logoHeight = std::min(345.0f * s, logoWidth * m_logoSource.h / m_logoSource.w);
     const float actualWidth = logoHeight * m_logoSource.w / m_logoSource.h;
-    const float bob = std::sin(m_time * 1.4f) * 2.0f * s;
+    const float bob = 0.0f;
     const engine::Rect logoRect{c.x - actualWidth * 0.5f,
                                 c.y - 85.0f * s - logoHeight * 0.5f + bob,
                                 actualWidth, logoHeight};
     batch.Draw(*m_logo, {logoRect.x + 6.0f * s, logoRect.y + 10.0f * s,
                          actualWidth, logoHeight}, m_logoSource, Color{0, 0, 0, 150});
     batch.Draw(*m_logo, logoRect, m_logoSource);
-    DrawLabel(batch, "JAGA HUTAN   PADAMKAN API", c.x, c.y + 106.0f * s,
-              2.0f * s, Color::FromHex(0xD1C9AC));
+    // A field note balances the start action without enclosing the logo in a card.
+    rect(-436, 122, 344, 136, Color::FromHex(0x071411, 150));
+    rect(-442, 116, 344, 136, paper);
+    rect(-442, 116, 5, 136, shade);
+    rect(-419, 110, 64, 13, Color::FromHex(0xB9B58A));
+    label("SEBELUM MASUK HUTAN", -422, 137, 2, ink);
+    rect(-422, 160, 302, 1, shade);
+    auto key = [&](std::string_view value, float x, float y, float width) {
+        rect(x, y+3, width, 21, shade);
+        rect(x, y, width, 21, cream);
+        label(value, x+6, y+4, 2, ink);
+    };
+    key("WASD", -422, 175, 58);
+    label("GERAK", -346, 180, 2, ink);
+    label("ATAU TOMBOL PANAH", -346, 201, 1, ink);
+    key("SCROLL", -422, 220, 82);
+    label("ZOOM TAMPILAN", -324, 225, 2, ink);
 
     const engine::Rect button = StartButton(size);
     const bool hovered = button.Contains(App().GetInput().GetMousePosition());
-    batch.Draw(*m_glow, {c.x - 250.0f * s, button.y - 56.0f * s, 500.0f * s, 180.0f * s},
-               Color::FromHex(hovered ? 0xECA237 : 0x965524));
-    batch.DrawRect({button.x, button.y + 6.0f * s, button.w, button.h}, Color::FromHex(0x562B16));
-    batch.DrawRect(button, Color::FromHex(0xC58636));
-    batch.DrawRect({button.x + 2.0f * s, button.y + 2.0f * s,
-                    button.w - 4.0f * s, button.h - 5.0f * s},
-                   Color::FromHex(hovered ? 0xFFD16A : 0xF2AC48));
-    batch.DrawRect({button.x + 4.0f * s, button.y + 3.0f * s,
-                    button.w - 8.0f * s, 2.0f * s}, Color::FromHex(0xFFE3A0));
-    DrawLabel(batch, "MULAI", c.x + 10.0f * s, button.y + 20.0f * s, 3.5f * s,
-              Color::FromHex(0x302516));
-    for (int i = 0; i < 6; ++i) {
-        batch.DrawRect({c.x - 78.0f * s + i * 2.0f * s, button.y + (21.0f + i * 2.0f) * s,
-                        2.0f * s, (22.0f - i * 4.0f) * s}, Color::FromHex(0x302516));
-    }
+    label("HUTAN MENUNGGUMU", 90, 116, 2, shade);
+    batch.DrawRect({button.x, button.y+5*s, button.w, button.h}, Color::FromHex(0x071411));
+    batch.DrawRect(button, hovered ? cream : paper);
+    batch.DrawRect({button.x, button.y, 6*s, button.h}, moss);
+    label("MULAI JELAJAH", 113, 168, 3, ink);
+    // Pixel trail arrow on the far end of the paper tab.
+    rect(400, 175, 22, 4, ink);
+    for (int i=0; i<4; ++i)
+        rect(416+i*3.0f, 166+i*3.0f, 3, 22-i*6.0f, ink);
+    label("ENTER - SPASI", 90, 232, 2, hovered ? cream : shade);
 
-    DrawLabel(batch, "ENTER ATAU SPASI ATAU KLIK", c.x, button.Bottom() + 20.0f * s,
-              1.5f * s, Color::FromHex(0xD1C9AC));
-    DrawLabel(batch, "WASD ATAU PANAH UNTUK GERAK", c.x - 154.0f * s, c.y + 301.0f * s,
-              1.25f * s, Color::FromHex(0x829B88));
-    DrawLabel(batch, "ESC UNTUK KELUAR", c.x + 192.0f * s, c.y + 301.0f * s,
-              1.25f * s, Color::FromHex(0x829B88));
-
+    rect(-578, 287, 1156, 1, Color::FromHex(0xC7B58A, 55));
+    label("JAGA HUTAN - PADAMKAN API", -578, 310, 2, shade);
+    rect(422, 303, 46, 25, Color::FromHex(0x3B4031));
+    label("ESC", 428, 309, 2, cream);
+    label("KELUAR", 484, 309, 2, shade);
     batch.End();
 }
 
