@@ -42,10 +42,14 @@ public:
     engine::Rect GetBounds() const;  // in world pixels
     engine::Vec2 GetCenter() const;  // in world pixels
 
-    // Only tiles inside visibleArea are drawn.
-    void Draw(engine::SpriteBatch& batch, const engine::Texture& atlas,
-              const engine::Texture& treeTexture, const engine::Rect& treeSource,
+    // Ground and shadows are always below the depth-sorted trees/player.
+    void DrawGround(engine::SpriteBatch& batch, const engine::Texture& atlas,
               const engine::Rect& visibleArea, float time = 0.0f) const;
+    // Draw rear trees before the player, then foreground trees afterwards.
+    // Depth uses roots/feet in world coordinates, regardless of facing or X.
+    void DrawTrees(engine::SpriteBatch& batch, const engine::Texture& texture,
+                   const engine::Rect& source, const engine::Rect& visibleArea,
+                   float playerFeetY, bool foreground) const;
 
 private:
     int m_width = 0;

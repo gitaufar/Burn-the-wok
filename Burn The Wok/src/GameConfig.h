@@ -14,6 +14,9 @@ inline constexpr int MapHeightTiles = 32;
 inline constexpr unsigned MapSeed = 2026; // same seed -> same placeholder map every run
 
 inline constexpr float PlayerSpeed = 80.0f; // world pixels per second
+inline constexpr float PlayerHeight = 26.0f;
+// A compact top-down perspective: trees stand clearly above the ranger.
+inline constexpr float TreeHeight = PlayerHeight * 1.6f;
 
 // Integer zoom keeps every texel the same size on screen.
 inline constexpr int DefaultZoom = 3;

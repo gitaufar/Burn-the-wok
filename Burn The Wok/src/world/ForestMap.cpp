@@ -111,17 +111,18 @@ bool ForestMap::IsPath(int x, int y) const {
            (y > m_height * 0.3f + 2 && y < cy + 1 && std::abs(x - trailX) < 0.8f);
 }
 
-void ForestMap::Draw(engine::SpriteBatch& batch, const engine::Texture& atlas,
-                     const engine::Texture& treeTexture, const engine::Rect& treeSource,
+void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& atlas,
                      const engine::Rect& visibleArea, float time) const {
     const float ts = static_cast<float>(config::TileSize);
 
     // Convert the visible world rectangle to a tile range, so a big map costs
     // only as much as what fits on screen.
-    const int x0 = std::max(0, static_cast<int>(std::floor(visibleArea.Left() / ts)));
+    // Include shadows cast from trees immediately beside the viewport.
+    const float treeMargin = ts;
+    const int x0 = std::max(0, static_cast<int>(std::floor((visibleArea.Left() - treeMargin) / ts)));
     const int y0 = std::max(0, static_cast<int>(std::floor(visibleArea.Top() / ts)));
-    const int x1 = std::min(m_width - 1, static_cast<int>(std::floor(visibleArea.Right() / ts)));
-    const int y1 = std::min(m_height - 1, static_cast<int>(std::floor(visibleArea.Bottom() / ts)));
+    const int x1 = std::min(m_width - 1, static_cast<int>(std::floor((visibleArea.Right() + treeMargin) / ts)));
+    const int y1 = std::min(m_height - 1, static_cast<int>(std::floor((visibleArea.Bottom() + treeMargin) / ts)));
 
     for (int y = y0; y <= y1; ++y) {
         for (int x = x0; x <= x1; ++x) {
@@ -188,7 +189,7 @@ void ForestMap::Draw(engine::SpriteBatch& batch, const engine::Texture& atlas,
             const TileType tile = GetTile(x, y);
             const unsigned detail = static_cast<unsigned>(x * 317 + y * 167);
             if (tile == TileType::Tree) {
-                batch.Draw(atlas, {x * ts + 2, y * ts + 11, ts - 1, 5}, GetSpriteSource(SpriteId::Shadow));
+                batch.Draw(atlas, {x * ts + ts * 0.5f - 12, y * ts + ts - 5, 24, 7}, GetSpriteSource(SpriteId::Shadow));
             } else if (tile != TileType::Water && !IsPath(x, y)) {
                 const bool nearWater = GetTile(x + 1, y) == TileType::Water ||
                     GetTile(x - 1, y) == TileType::Water || GetTile(x, y + 1) == TileType::Water ||
@@ -204,16 +205,34 @@ void ForestMap::Draw(engine::SpriteBatch& batch, const engine::Texture& atlas,
         }
     }
 
-    // Draw all trees together to avoid switching textures for each individual tile.
-    // Fit the visible artwork to one tile and align its roots to the tile bottom.
-    const float scale = ts / std::max(treeSource.w, treeSource.h);
-    const float width = treeSource.w * scale;
-    const float height = treeSource.h * scale;
+}
+
+void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& treeTexture,
+                          const engine::Rect& treeSource, const engine::Rect& visibleArea,
+                          float playerFeetY, bool foreground) const {
+    const float ts = static_cast<float>(config::TileSize);
+    // A tree rooted outside the viewport can still have a visible crown.
+    const float margin = config::TreeHeight * 1.06f *
+        std::max(1.0f, treeSource.w / treeSource.h);
+    const int x0 = std::max(0, static_cast<int>(std::floor((visibleArea.Left() - margin) / ts)));
+    const int y0 = std::max(0, static_cast<int>(std::floor(visibleArea.Top() / ts)));
+    const int x1 = std::min(m_width - 1, static_cast<int>(std::floor((visibleArea.Right() + margin) / ts)));
+    const int y1 = std::min(m_height - 1, static_cast<int>(std::floor((visibleArea.Bottom() + margin) / ts)));
+
+    // Rows already run from farthest to nearest; split them at the player's feet.
+    // Equal depth draws the player last for a stable tie on either side of a tree.
+    // Keep the original aspect ratio and anchor roots to the collision tile.
+    // Crowns extend above and around the trunk, just as in a top-down forest.
     for (int y = y0; y <= y1; ++y) {
+        const float rootY = (y + 1) * ts;
+        if ((rootY > playerFeetY) != foreground) continue;
         for (int x = x0; x <= x1; ++x) {
             if (GetTile(x, y) == TileType::Tree) {
+                const float variation = 0.94f + static_cast<float>((x * 13 + y * 7) % 5) * 0.03f;
+                const float height = config::TreeHeight * variation;
+                const float width = treeSource.w * height / treeSource.h;
                 batch.Draw(treeTexture,
-                           {x * ts + (ts - width) * 0.5f, y * ts + ts - height, width, height},
+                           {x * ts + (ts - width) * 0.5f, rootY - height, width, height},
                            treeSource, engine::Color::FromHex(
                                (x * 13 + y * 7) % 3 == 0 ? 0xDEE4CA : 0xF2EDDC));
             }

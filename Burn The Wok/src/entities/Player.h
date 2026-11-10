@@ -2,6 +2,9 @@
 
 #include <engine/math/Rect.h>
 #include <engine/math/Vec2.h>
+#include <engine/graphics/Texture.h>
+#include <array>
+#include <memory>
 
 namespace engine {
 class Input;
@@ -20,6 +23,8 @@ enum class Facing { Down, Up, Left, Right };
 class Player {
 public:
     explicit Player(engine::Vec2 position) : m_position(position), m_previousPosition(position) {}
+    // Call after the graphics context is ready.
+    void LoadArtwork();
 
     // Moves with WASD/arrows; trees and water stop the player, who slides along them.
     void Update(const engine::Input& input, float dt, const ForestMap& map);
@@ -32,12 +37,18 @@ public:
     // Position between the previous and the current update, rounded to whole world
     // pixels so the sprite lines up with the tile grid.
     engine::Vec2 GetRenderPosition(float alpha) const;
+    float GetRenderFeetY(float alpha) const {
+        return GetRenderPosition(alpha).y + HitboxOffsetY + HitboxHeight;
+    }
 
-    void Draw(engine::SpriteBatch& batch, const engine::Texture& atlas, float alpha) const;
+    void Draw(engine::SpriteBatch& batch, const engine::Texture& atlas, float alpha, float zoom) const;
 
     Facing GetFacing() const { return m_facing; }
 
 private:
+    std::array<std::unique_ptr<engine::Texture>, 16> m_frames;
+    std::array<engine::Rect, 16> m_sources{};
+    float m_artScale = 1.0f;
     void UpdateFacing(engine::Vec2 direction);
 
     // Hitbox size and placement relative to m_position (the sprite center).
