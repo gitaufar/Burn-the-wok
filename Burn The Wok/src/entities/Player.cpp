@@ -46,31 +46,41 @@ engine::Image BuildDetailedSprite(const engine::Image& source) {
     return result;
 }
 
+// The ranger frames (assets/characters/ranger, built by tools/assets/compose_ranger.py)
+// all share one layout, in image pixels: the head is centered on the canvas and the
+// lowest body pixel sits on row ArtFeetY. Nozzle = tip of the spray gun in each facing,
+// relative to (canvas center, ArtFeetY); the script prints these numbers.
+constexpr float ArtFeetY = 76.0f;
+constexpr Vec2 NozzleDown{12.0f, -10.0f};  // gun held at the side, pointing at the ground
+constexpr Vec2 NozzleUp{-12.0f, -34.0f};
+constexpr Vec2 NozzleLeft{-21.0f, -18.0f};
+constexpr Vec2 NozzleRight{21.0f, -19.0f};
+
 } // namespace
 
 void Player::LoadArtwork() {
-    // Explicit names preserve the original art team's filenames and frame order.
-    const char* files[] = {
-        "Front 1.png", "Front 2.png", "Front 3.png", "Front 4.png",
-        "Back 11.png", "Back 2.png", "Back 3.png", "Back 4.png",
-        "Left 1.png", "Left 2.png", "Left 3.png", "Left 4.png",
-        "Right.png", "Right 2.png", "Right 3.png", "Right 4.png"
-    };
+    // Two sets (walking, then "spray_" = holding the gun); in each, rows follow the
+    // Facing enum (Down, Up, Left, Right) with 4 walk frames.
+    const char* directions[] = {"front", "back", "left", "right"};
     float tallest = 1.0f;
-    for (int i = 0; i < 16; ++i) {
-        const auto image = engine::Image::LoadFromFile(std::string("assets/characters/") + files[i]);
-        const auto bounds = image.GetContentBounds(1);
-        m_sources[i] = {bounds.x * 2, bounds.y * 2, bounds.w * 2, bounds.h * 2};
-        tallest = std::max(tallest, m_sources[i].h);
+    for (int i = 0; i < FramesPerSet * 2; ++i) {
+        const int inSet = i % FramesPerSet;
+        const auto image = engine::Image::LoadFromFile(
+            std::string("assets/characters/ranger/") + (i < FramesPerSet ? "" : "spray_") +
+            directions[inSet / 4] + "_" + std::to_string(inSet % 4 + 1) + ".png");
+        // Whole canvas as source: the frames are pre-aligned, so one fixed anchor
+        // works for all of them and the gun/tank never shift the body sideways.
+        m_sources[i] = {0.0f, 0.0f, image.GetWidth() * 2.0f, image.GetHeight() * 2.0f};
+        tallest = std::max(tallest, image.GetContentBounds(128).h * 2.0f);
         m_frames[i] = std::make_unique<engine::Texture>(BuildDetailedSprite(image));
     }
-    // One shared scale keeps every pose consistent; transparent canvas padding
-    // does not shrink the character. Feet stay anchored to the collision box.
+    // One shared scale keeps every pose consistent: the tallest pose is PlayerHeight.
     m_artScale = config::PlayerHeight / tallest;
 }
 
 void Player::Update(const engine::Input& input, float dt, const ForestMap& map) {
     m_previousPosition = m_position;
+    m_aiming = false; // set again by Aim() if the trigger is still held
 
     Vec2 direction{};
     if (input.IsKeyDown(Key::A) || input.IsKeyDown(Key::Left)) direction.x -= 1.0f;
@@ -133,19 +143,31 @@ void Player::UpdateFacing(Vec2 direction) {
     }
 }
 
+Facing Player::FacingFor(Vec2 direction) {
+    if (std::abs(direction.x) > std::abs(direction.y)) {
+        return direction.x < 0.0f ? Facing::Left : Facing::Right;
+    }
+    return direction.y < 0.0f ? Facing::Up : Facing::Down;
+}
+
 void Player::Aim(Vec2 direction) {
     if (direction == Vec2{}) return;
     // Pick the dominant axis; UpdateFacing would keep the old facing on diagonals.
-    if (std::abs(direction.x) > std::abs(direction.y)) {
-        m_facing = direction.x < 0.0f ? Facing::Left : Facing::Right;
-    } else {
-        m_facing = direction.y < 0.0f ? Facing::Up : Facing::Down;
-    }
+    m_facing = FacingFor(direction);
+    m_aiming = true;
 }
 
 Vec2 Player::GetNozzlePosition(Vec2 aim) const {
-    // Hand height, out at the tip of the sprayer drawn beside the ranger.
-    return m_position + Vec2{0.0f, 1.0f} + aim * 12.0f;
+    Vec2 nozzle = NozzleDown;
+    switch (aim == Vec2{} ? m_facing : FacingFor(aim)) {
+    case Facing::Down:  nozzle = NozzleDown;  break;
+    case Facing::Up:    nozzle = NozzleUp;    break;
+    case Facing::Left:  nozzle = NozzleLeft;  break;
+    case Facing::Right: nozzle = NozzleRight; break;
+    }
+    // Image pixels -> world: frames are doubled by Scale2x, then scaled by m_artScale.
+    const Vec2 feet{m_position.x, m_position.y + HitboxOffsetY + HitboxHeight};
+    return feet + nozzle * (2.0f * m_artScale);
 }
 
 Vec2 Player::GetRenderPosition(float alpha) const {
@@ -162,7 +184,7 @@ void Player::Draw(engine::SpriteBatch& batch, const engine::Texture& atlas, floa
     }
 
     const Vec2 center = GetRenderPosition(alpha);
-    const int frame = static_cast<int>(m_facing) * 4 +
+    const int frame = (m_aiming ? FramesPerSet : 0) + static_cast<int>(m_facing) * 4 +
         (m_moving ? std::min(3, static_cast<int>(m_walkTime / 0.1f)) : 0);
     if (m_frames[frame]) {
         const auto source = m_sources[frame];
@@ -175,8 +197,10 @@ void Player::Draw(engine::SpriteBatch& batch, const engine::Texture& atlas, floa
         const float width = snap(source.w * m_artScale);
         const float height = snap(source.h * m_artScale);
         batch.Draw(atlas, {center.x - 6, center.y + 5, 12, 4}, GetSpriteSource(SpriteId::Shadow));
+        // Row ArtFeetY of the image (doubled by Scale2x) rests on the feet line.
+        const float feetOffset = ArtFeetY * 2.0f * m_artScale;
         batch.Draw(*m_frames[frame],
-                   {snap(center.x - width * 0.5f), snap(GetRenderFeetY(alpha) - height), width, height}, source);
+                   {snap(center.x - width * 0.5f), snap(GetRenderFeetY(alpha) - feetOffset), width, height}, source);
         return;
     }
     const float size = static_cast<float>(config::TileSize);

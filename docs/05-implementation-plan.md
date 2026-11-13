@@ -84,6 +84,8 @@ Penyebaran & sawit 13/11/2026 (branch yang sama dengan sisa Tahap 2):
 
 Aset asli 13/11/2026: sprite api & sawit placeholder (gambar kode) diganti `items/fire.png` dan `items/palm_oil_tree.png`; penyemprot (`items/sprayer_*`) dan semburan air (`items/water_spray_*`) ditambahkan (detail di `04-characters-assets.md`). Nosel semprotan dipindah ke ujung penyemprot (12 px dari pemain). Dicek lewat screenshot gim: api, sawit, penyemprot kiri/kanan, dan semburan tampil benar. Uji headless 108 + 71 tetap lolos.
 
+Sprite gabungan 13/11/2026: penyemprot yang digambar terpisah diganti 32 frame penjaga hutan (`assets/characters/ranger/`, detail di `04-characters-assets.md`): set jalan (tangki di punggung, tangan mengayun) dan set semprot (memegang pistol; dipakai selama klik kiri ditahan). Air keluar dari moncong pistol sesuai arah hadap; saat menghadap bawah/atas pistol dipegang di samping badan. Dicek lewat screenshot (diam, semprot kanan/kiri/bawah/atas).
+
 ## Tahap 4 — Satwa & AI (16/11)
 
 - [ ] Orang utan, bekantan, burung hantu (entitas + sprite 4 arah)
@@ -194,6 +196,7 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 | 13/11/2026 | Penyebaran = loncat ke pohon acak dalam radius 2 tile (bukan hanya tetangga langsung) | Pohon di peta jarang (±12%); dengan tetangga langsung api hampir tidak pernah menyebar |
 | 13/11/2026 | Angka awal Tahap 3: timer 150 s, sawit kalah 15%, jeda sebar 12 s (hanya api ≥50%), pohon → sawit 30 s | Placeholder di `GameConfig.h`; simulasi: tanpa pemain kalah ±70–90 s, bot sederhana menang ±30–45 s |
 | 13/11/2026 | Aset item dari tim aset menggantikan placeholder api & sawit; animasi api dari satu gambar (cermin + goyang), bukan frame gambar tangan | Aset hanya 1 gambar api; ganti dengan animasi berframe jika tim aset membuatnya |
+| 13/11/2026 | Sprite pemain = gabungan penjaga hutan + penyemprot (`characters/ranger/`), dibuat skrip `tools/assets/compose_ranger.py` dari aset tim; penyemprot tidak lagi digambar terpisah | Permintaan tim: gambar terpisah terlihat tidak natural. Skrip Python hanya alat pembuat aset, bukan dependency gim |
 | 06/11/2026 | Contoh dosen = kode buku *Game Programming in C++* (Madhav); dipakai sebagai referensi, **kodenya tidak disalin** | Aturan engine sendiri |
 | 09/11/2026 | Revisi HUD eksplorasi: judul lokasi terbuka dengan lencana, peta kertas lipat dengan kompas utara dan margin koordinat, tombol WASD tersusun spasial | Permintaan perbaikan visual halaman gameplay; memakai renderer pixel internal tanpa dependency baru |
 | 09/11/2026 | Menu start diselaraskan dengan HUD: logo asli dipertahankan, lencana kawasan, catatan kontrol kertas, tombol mulai warna krem dengan hover, font pixel bersama | Revisi visual permintaan pengguna; kontrol Enter/Spasi/klik dan Esc tetap berlaku |

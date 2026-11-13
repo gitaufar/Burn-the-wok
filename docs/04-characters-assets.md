@@ -67,10 +67,25 @@ Frame jalan karakter baru dibuat dari satu pose per arah: kaki kiri dan kanan be
 |---|---|---|
 | `items/fire.png` | Api di pohon (`Fire::Draw`) + ikon api di HUD | Tinggi 12–26 px dunia sesuai intensitas; animasi kedip = gambar dicerminkan bergantian + tinggi bergoyang sedikit; api kuat dapat 2 api kecil di samping. Cahaya oranye di bawahnya masih dari atlas kode (`Glow`) |
 | `items/palm_oil_tree.png` | Tile `Sawit` (`ForestMap::DrawTrees`) | Tinggi `SawitHeight` (0,9 × pohon), akar di dasar tile, di atas tanah |
-| `items/sprayer_left/right.png` | Penyemprot di tangan penjaga hutan selama klik kiri ditahan | Tinggi 12 px dunia, sisi kiri/kanan mengikuti arah bidik; saat membidik ke atas digambar di belakang pemain |
-| `items/water_spray_left/right.png` | Semburan air di ujung penyemprot | Hanya saat air keluar dan bidikan cukup ke samping (gambar hanya menghadap kiri/kanan); tetes air (`WaterDrop`, kotak 2 px) tetap ada karena tetes itulah yang mengenai api |
+| `items/sprayer_left/right.png` | **Bahan** sprite gabungan penjaga hutan (lihat di bawah); tidak lagi digambar terpisah oleh gim | — |
+| `characters/ranger/<arah>_<n>.png` | Penjaga hutan **berjalan** dengan tangki di punggung (16 frame, 96×80 px) — sprite pemain di gim | Dibuat oleh `tools/assets/compose_ranger.py` |
+| `characters/ranger/spray_<arah>_<n>.png` | Penjaga hutan **menyemprot**: memegang pistol semprot (16 frame) — dipakai selama klik kiri ditahan | idem |
+| `items/water_spray_left/right.png` | Semburan air di moncong pistol semprot | Hanya saat air keluar dan pemain menghadap kiri/kanan (gambar hanya menghadap kiri/kanan); tetes air (`WaterDrop`, kotak 2 px) tetap ada karena tetes itulah yang mengenai api |
 
-Semua gambar dipotong otomatis ke bagian yang tidak transparan (`Image::GetContentBounds`). Belum dipakai: sprite satwa (Tahap 4) dan Wowo/Tedduy (Tahap 5).
+Semua gambar item dipotong otomatis ke bagian yang tidak transparan (`Image::GetContentBounds`). Belum dipakai: sprite satwa (Tahap 4) dan Wowo/Tedduy (Tahap 5).
+
+#### Sprite gabungan penjaga hutan + penyemprot (13/11/2026)
+
+Menggambar penyemprot sebagai gambar terpisah di atas badan terlihat tidak menyatu (melayang, menutupi badan, air tidak keluar dari moncong). Solusinya: 32 frame baru di `characters/ranger/` yang **digabung dari aset tim sendiri** (frame penjaga hutan `Front/Back/Left/Right *.png` + `items/sprayer_*.png`) oleh skrip `tools/assets/compose_ranger.py`:
+
+- Penyemprot dipecah jadi tangki dan pistol, dikecilkan (0,36× dan 0,42×) agar proporsional dengan karakter.
+- **Set jalan** (`<arah>_<n>.png`): hanya tangki di punggung, tangan mengayun bebas. Samping: tangki di belakang punggung (di bawah lapisan badan). Belakang: tangki menempel di punggung. Depan: tangki tersembunyi di belakang badan.
+- **Set semprot** (`spray_<arah>_<n>.png`): kaki diambil dari frame jalan, badan atas dari frame berdiri, sehingga tangan diam memegang pistol sementara kaki tetap melangkah. Samping: pistol dipegang dua tangan (tangan digambar skrip). Depan/belakang: pistol lurus dipegang di samping badan mengarah ke bawah/atas (digambar skrip dengan warna yang sama, karena gambar pistol hanya ada tampak samping) — air keluar dari samping kaki, bukan dari tengah badan.
+- Gim memakai set jalan, dan beralih ke set semprot selama klik kiri ditahan (`Player::Aim`).
+- Semua frame diseragamkan: kanvas 96×80, kepala di tengah (x = 48), kaki di baris y = 76. Karena itu gim memakai satu jangkar tetap untuk semua frame, dan goyangan kecil akibat piksel nyasar di file asli hilang.
+- Skrip mencetak posisi moncong per arah; angka itu dipakai `Player::GetNozzlePosition` sehingga air keluar tepat dari moncong.
+
+Skrip ini alat bantu pengembangan (Python + Pillow), **bukan** dependency gim: gim hanya memuat PNG hasilnya. Jalankan ulang jika sprite karakter/penyemprot diganti: `python tools/assets/compose_ranger.py` (opsi `--preview file.png` untuk lembar pratinjau). File asli `Front 1.png` dst. tetap disimpan sebagai sumber.
 
 ### Placeholder di kode (Tahap 1)
 
