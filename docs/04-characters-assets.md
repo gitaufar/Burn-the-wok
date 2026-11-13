@@ -47,6 +47,20 @@ Semua karakter memiliki sprite **4 arah: depan, belakang, kiri, kanan**.
 - Ukuran sprite terdeteksi: **BELUM DIKETAHUI**
 - Laporan menyebut sprite Wowo, Tedduy, orang utan, bekantan, burung hantu, pohon, sawit, api, air, dan penyemprot. **Dikonfirmasi tim 06/11/2026: file aset belum ada sama sekali** (termasuk di luar repo). Tahap 1 memakai placeholder; ukuran tile/sprite disepakati saat aset mulai dibuat.
 
+### Update aset di repo (13/11/2026, branch `feat/add-assets`)
+
+Bagian di atas dicek 06/11 dan sudah usang. Isi `Burn The Wok/assets/` sekarang:
+
+| Folder | Isi | Catatan |
+|---|---|---|
+| `characters/` | Penjaga hutan: 16 PNG `Front 1-4`, `Back 1-4`, `Left 1-4`, `Right 1-4` (nama file lama tidak seragam, mis. `Back 11.png`, `Right.png`; dimuat apa adanya oleh `Player::LoadArtwork`) | 80×80 px |
+| `characters/<nama>/` | `bekantan`, `orangutan`, `burung_hantu`, `wowo`, `tedduy`: masing-masing 16 PNG `<arah>_<n>.png` (arah: front/back/left/right, n: 1-4) | 80×80 px, latar transparan |
+| `items/` | `sprayer_right/left`, `water_spray_right/left`, `fire`, `palm_oil_tree` | Item diam; hanya penyemprot dan semprotan yang punya versi kiri-kanan |
+| `environment/Tree.png`, `ui/...Emblem.png` | Pohon dan logo | dari tim aset |
+| `audio/`, `fonts/` | kosong | belum ada |
+
+Frame jalan karakter baru dibuat dari satu pose per arah: kaki kiri dan kanan bergantian terangkat secara otomatis (bukan animasi gambar tangan). Urutan frame: 1 diam, 2 kaki kiri naik, 3 diam, 4 kaki kanan naik. Ganti dengan animasi gambar tangan jika sudah tersedia. Penentuan siapa Wowo dan siapa Tedduy mengikuti dugaan sementara (setelan krem berpeci = `wowo`, seragam hijau = `tedduy`); tukar nama folder jika terbalik.
+
 ### Placeholder di kode (Tahap 1)
 
 Bukan file aset: atlas 128×16 px digambar piksel demi piksel oleh `Burn The Wok/src/art/PlaceholderArt.cpp` saat gim berjalan (decoder PNG belum disetujui). Isinya 8 sprite 16×16: rumput, rumput berbunga, pohon, air, dan penjaga hutan 4 arah (bawah/atas/kiri/kanan). Ukuran tile placeholder = **16×16 px** (`GameConfig.h`), ditampilkan dengan zoom 3×. Ini hanya untuk demo; ganti dengan aset asli begitu ada.
