@@ -43,6 +43,19 @@ Diverifikasi 06/11/2026: kedua konfigurasi sukses, 0 warning.
 
 ### Menjalankan gim
 
+- Terminal (mirip `npm run`, dari root repo; skrip: `run.bat` → `tools/dev.ps1`):
+
+  | Perintah | Fungsi |
+  |---|---|
+  | `.\run` | build Debug lalu main |
+  | `.\run release` | build Release lalu main |
+  | `.\run build` | build Debug saja |
+  | `.\run play` | main pakai build Debug terakhir (tanpa build) |
+  | `.\run package` | build Release + buat zip di `dist\` (= `tools\package-release.bat`) |
+  | `.\run clean` | hapus folder hasil build |
+  | `.\run help` | daftar perintah |
+
+  Di Command Prompt cukup `run`; di PowerShell/terminal VS Code wajib `.\run`. Working directory gim = folder `Burn The Wok/`, sama seperti F5.
 - IDE: F5 (debug) / Ctrl+F5. Working directory saat debug = folder `Burn The Wok/` (penting untuk path aset nanti).
 - Manual: `Debug\Burn The Wok.exe` atau `Release\Burn The Wok.exe` (relatif ke root repo). `SDL2.dll` dan `glew32.dll` otomatis disalin ke folder itu saat build (target `CopyEngineRuntimeDlls` di `Engine/Engine.props`).
 - Kontrol demo: Enter/Spasi = mulai, WASD/panah = gerak, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), F3 = tampilkan hitbox & tile padat (debug), Esc = kembali ke menu / keluar dari menu.
