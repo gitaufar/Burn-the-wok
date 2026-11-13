@@ -13,10 +13,10 @@ namespace game {
 using engine::Color;
 using engine::Vec2;
 
-Fire::Fire(int tileX, int tileY, const engine::Texture& atlas)
+Fire::Fire(int tileX, int tileY, const FireArt& art)
     // Position = bottom-center of the tile, i.e. where the tree's roots are.
     : engine::Entity({(tileX + 0.5f) * config::TileSize, (tileY + 1.0f) * config::TileSize}),
-      m_atlas(&atlas),
+      m_art(art),
       m_tileX(tileX),
       m_tileY(tileY),
       m_intensity(config::FireStartIntensity),
@@ -61,7 +61,7 @@ void Fire::Draw(engine::SpriteBatch& batch, float alpha) const {
 
     // Warm light on the ground and the tree, pulsing slightly.
     const float glowSize = 26.0f + 18.0f * strength + flicker * 3.0f;
-    batch.Draw(*m_atlas, {base.x - glowSize * 0.5f, base.y - 9.0f - glowSize * 0.5f, glowSize, glowSize},
+    batch.Draw(*m_art.atlas, {base.x - glowSize * 0.5f, base.y - 9.0f - glowSize * 0.5f, glowSize, glowSize},
                GetSpriteSource(SpriteId::Glow),
                Color::FromHex(0xFF8A3D, static_cast<std::uint8_t>(70 + 60 * strength)));
 
@@ -69,19 +69,24 @@ void Fire::Draw(engine::SpriteBatch& batch, float alpha) const {
     const bool steaming = m_sinceWater < 0.12f;
     const Color tint = steaming ? Color::FromHex(0xFFE9D6) : Color::White();
 
-    const SpriteId frames[] = {SpriteId::FireA, SpriteId::FireB, SpriteId::FireC};
-    const int frame = static_cast<int>(m_time * 9.0f) % 3;
-    const float size = std::round(10.0f + 10.0f * strength);
-    batch.Draw(*m_atlas, {base.x - size * 0.5f, base.y - 2.0f - size, size, size},
-               GetSpriteSource(frames[frame]), tint);
-    // Strong fires get two smaller side flames.
+    // One flame image, animated by mirroring it and stretching its height a little:
+    // enough to read as flickering without hand-drawn frames.
+    const engine::Rect src = m_art.flameSource;
+    const engine::Rect mirrored{src.x + src.w, src.y, -src.w, src.h};
+    const bool flip = static_cast<int>(m_time * 7.0f) % 2 == 1;
+    auto flame = [&](float centerX, float bottomY, float height, bool mirror) {
+        const float h = std::round(height * (1.0f + 0.07f * std::sin(m_time * 13.0f + centerX)));
+        const float w = std::round(height * src.w / src.h);
+        batch.Draw(*m_art.flame, {std::round(centerX - w * 0.5f), bottomY - h, w, h},
+                   mirror ? mirrored : src, tint);
+    };
+    const float height = 12.0f + 14.0f * strength;
+    // Strong fires get two smaller side flames behind the main one.
     if (strength > 0.45f) {
-        const float side = std::round(size * 0.65f);
-        batch.Draw(*m_atlas, {base.x - 7.0f - side * 0.5f, base.y - 3.0f - side, side, side},
-                   GetSpriteSource(frames[(frame + 1) % 3]), tint);
-        batch.Draw(*m_atlas, {base.x + 7.0f - side * 0.5f, base.y - 4.0f - side, side, side},
-                   GetSpriteSource(frames[(frame + 2) % 3]), tint);
+        flame(base.x - 6.0f, base.y - 3.0f, height * 0.62f, !flip);
+        flame(base.x + 6.0f, base.y - 4.0f, height * 0.62f, flip);
     }
+    flame(base.x, base.y - 1.0f, height, flip);
 }
 
 } // namespace game

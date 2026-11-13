@@ -61,6 +61,17 @@ Bagian di atas dicek 06/11 dan sudah usang. Isi `Burn The Wok/assets/` sekarang:
 
 Frame jalan karakter baru dibuat dari satu pose per arah: kaki kiri dan kanan bergantian terangkat secara otomatis (bukan animasi gambar tangan). Urutan frame: 1 diam, 2 kaki kiri naik, 3 diam, 4 kaki kanan naik. Ganti dengan animasi gambar tangan jika sudah tersedia. Penentuan siapa Wowo dan siapa Tedduy mengikuti dugaan sementara (setelan krem berpeci = `wowo`, seragam hijau = `tedduy`); tukar nama folder jika terbalik.
 
+### Aset item yang sudah dipakai di gim (13/11/2026)
+
+| File | Dipakai untuk | Cara tampil |
+|---|---|---|
+| `items/fire.png` | Api di pohon (`Fire::Draw`) + ikon api di HUD | Tinggi 12–26 px dunia sesuai intensitas; animasi kedip = gambar dicerminkan bergantian + tinggi bergoyang sedikit; api kuat dapat 2 api kecil di samping. Cahaya oranye di bawahnya masih dari atlas kode (`Glow`) |
+| `items/palm_oil_tree.png` | Tile `Sawit` (`ForestMap::DrawTrees`) | Tinggi `SawitHeight` (0,9 × pohon), akar di dasar tile, di atas tanah |
+| `items/sprayer_left/right.png` | Penyemprot di tangan penjaga hutan selama klik kiri ditahan | Tinggi 12 px dunia, sisi kiri/kanan mengikuti arah bidik; saat membidik ke atas digambar di belakang pemain |
+| `items/water_spray_left/right.png` | Semburan air di ujung penyemprot | Hanya saat air keluar dan bidikan cukup ke samping (gambar hanya menghadap kiri/kanan); tetes air (`WaterDrop`, kotak 2 px) tetap ada karena tetes itulah yang mengenai api |
+
+Semua gambar dipotong otomatis ke bagian yang tidak transparan (`Image::GetContentBounds`). Belum dipakai: sprite satwa (Tahap 4) dan Wowo/Tedduy (Tahap 5).
+
 ### Placeholder di kode (Tahap 1)
 
 Bukan file aset: atlas 128×16 px digambar piksel demi piksel oleh `Burn The Wok/src/art/PlaceholderArt.cpp` saat gim berjalan (decoder PNG belum disetujui). Isinya 8 sprite 16×16: rumput, rumput berbunga, pohon, air, dan penjaga hutan 4 arah (bawah/atas/kiri/kanan). Ukuran tile placeholder = **16×16 px** (`GameConfig.h`), ditampilkan dengan zoom 3×. Ini hanya untuk demo; ganti dengan aset asli begitu ada.

@@ -144,8 +144,8 @@ void Player::Aim(Vec2 direction) {
 }
 
 Vec2 Player::GetNozzlePosition(Vec2 aim) const {
-    // Roughly hand height, a few pixels out in the aim direction.
-    return m_position + Vec2{0.0f, -2.0f} + aim * 6.0f;
+    // Hand height, out at the tip of the sprayer drawn beside the ranger.
+    return m_position + Vec2{0.0f, 1.0f} + aim * 12.0f;
 }
 
 Vec2 Player::GetRenderPosition(float alpha) const {

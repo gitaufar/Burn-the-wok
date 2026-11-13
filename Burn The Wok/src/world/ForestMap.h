@@ -66,10 +66,11 @@ public:
               const engine::Rect& visibleArea, float time = 0.0f) const;
     // Draw rear trees before the player, then foreground trees afterwards.
     // Depth uses roots/feet in world coordinates, regardless of facing or X.
-    // sawitTexture is drawn whole for Sawit tiles (roots at the bottom of the tile).
+    // Sawit tiles use sawitTexture/sawitSource the same way (roots at the bottom of the tile).
     void DrawTrees(engine::SpriteBatch& batch, const engine::Texture& texture,
                    const engine::Rect& source, const engine::Texture& sawitTexture,
-                   const engine::Rect& visibleArea, float playerFeetY, bool foreground) const;
+                   const engine::Rect& sawitSource, const engine::Rect& visibleArea,
+                   float playerFeetY, bool foreground) const;
 
 private:
     // Shape of the placeholder trail; used once while generating the map.

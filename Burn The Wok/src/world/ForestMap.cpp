@@ -249,7 +249,8 @@ void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& at
 
 void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& treeTexture,
                           const engine::Rect& treeSource, const engine::Texture& sawitTexture,
-                          const engine::Rect& visibleArea, float playerFeetY, bool foreground) const {
+                          const engine::Rect& sawitSource, const engine::Rect& visibleArea,
+                          float playerFeetY, bool foreground) const {
     const float ts = static_cast<float>(config::TileSize);
     // A tree rooted outside the viewport can still have a visible crown.
     const float margin = config::TreeHeight * 1.06f *
@@ -283,9 +284,11 @@ void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& tre
                            {x * ts + (ts - width) * 0.5f, rootY - height, width, height},
                            treeSource, {mix(base.r, charred.r), mix(base.g, charred.g), mix(base.b, charred.b), 255});
             } else if (tile == TileType::Sawit) {
-                const float width = static_cast<float>(sawitTexture.GetWidth());
-                const float height = static_cast<float>(sawitTexture.GetHeight());
-                batch.Draw(sawitTexture, {x * ts + (ts - width) * 0.5f, rootY - height, width, height});
+                // Planted in rows: identical palms, unlike the varied forest trees.
+                const float height = config::SawitHeight;
+                const float width = sawitSource.w * height / sawitSource.h;
+                batch.Draw(sawitTexture, {x * ts + (ts - width) * 0.5f, rootY - height, width, height},
+                           sawitSource);
             }
         }
     }
