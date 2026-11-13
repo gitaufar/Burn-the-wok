@@ -39,7 +39,7 @@ int FireSystem::IgniteRandomTrees(engine::EntityWorld& world, const ForestMap& m
 
 bool FireSystem::Ignite(engine::EntityWorld& world, const ForestMap& map, int tileX, int tileY) {
     if (!map.IsBurnable(tileX, tileY) || IsBurning(world, tileX, tileY)) return false;
-    world.Spawn<Fire>(tileX, tileY, *m_atlas);
+    world.Spawn<Fire>(tileX, tileY, m_art);
     return true;
 }
 

@@ -136,33 +136,6 @@ int Offset(SpriteId id) {
     return static_cast<int>(id) * S;
 }
 
-// Teardrop flame, 16x16, base on the bottom row. Each frame bends the tip a little
-// differently so cycling the frames looks like flickering.
-void PaintFlame(Image& img, int ox, int frame) {
-    const Color outer = Color::FromHex(0xB3341F);
-    const Color middle = Color::FromHex(0xF0772B);
-    const Color inner = Color::FromHex(0xFFD25A);
-    const Color core = Color::FromHex(0xFFF1B0);
-    for (int y = 0; y < S; ++y) {
-        const float v = (S - 1 - y) / static_cast<float>(S - 1); // 0 = bottom row, 1 = top row
-        // Round bottom, long tapering top.
-        const float t = v < 0.3f ? (v - 0.3f) / 0.32f : (v - 0.3f) / 0.72f;
-        const float halfWidth = 6.5f * std::sqrt(std::max(0.0f, 1.0f - t * t));
-        const float center = 7.5f + std::sin(v * 5.0f + frame * 2.1f) * v * 2.0f;
-        for (int x = 0; x < S; ++x) {
-            const float d = std::abs(x - center) / std::max(halfWidth, 0.01f);
-            if (d > 1.0f) continue;
-            // Ragged outline: drop a few edge pixels, differently in every frame.
-            if (d > 0.75f && Hash(x + frame * 31, y) % 4 == 0) continue;
-            Color color = outer;
-            if (d < 0.3f && v < 0.35f) color = core;
-            else if (d < 0.35f) color = inner;
-            else if (d < 0.7f) color = middle;
-            img.SetPixel(ox + x, y, color);
-        }
-    }
-}
-
 void PaintGlow(Image& img, int ox) {
     for (int y = 0; y < S; ++y) {
         for (int x = 0; x < S; ++x) {
@@ -236,47 +209,8 @@ engine::Image BuildPlaceholderAtlas() {
     PaintWater(atlas, Offset(SpriteId::WaterRippleTwo), 2);
     PaintWater(atlas, Offset(SpriteId::WaterRippleThree), 3);
     PaintDetails(atlas);
-    PaintFlame(atlas, Offset(SpriteId::FireA), 0);
-    PaintFlame(atlas, Offset(SpriteId::FireB), 1);
-    PaintFlame(atlas, Offset(SpriteId::FireC), 2);
     PaintGlow(atlas, Offset(SpriteId::Glow));
     return atlas;
-}
-
-engine::Image BuildSawitImage() {
-    constexpr int W = 26, H = 34;
-    Image img(W, H, Color::Transparent());
-    const Color trunk = Color::FromHex(0x6B4A2F);
-    const Color trunkLight = Color::FromHex(0x8A6440);
-    const Color frond = Color::FromHex(0x8FA33A);
-    const Color frondDark = Color::FromHex(0x667A2A);
-    const Color fruit = Color::FromHex(0xC8462B);
-
-    // Straight trunk with the stubby leaf-base pattern typical of oil palms.
-    img.FillRect(11, 12, 4, H - 12, trunk);
-    for (int y = 13; y < H - 1; y += 3) {
-        img.SetPixel(11, y, trunkLight);
-        img.SetPixel(14, y + 1, trunkLight);
-    }
-    // Fronds: arcs radiating from the crown, drooping at the tips.
-    const float cx = 13.0f, cy = 11.0f;
-    for (int i = 0; i < 9; ++i) {
-        const float angle = -3.14159f + i * (3.14159f / 8.0f); // left .. right, through the top
-        const float dx = std::cos(angle), dy = std::sin(angle);
-        for (int step = 0; step < 13; ++step) {
-            const float t = step / 12.0f;
-            const float x = cx + dx * step;
-            const float y = cy + dy * step * 0.8f + t * t * 7.0f; // gravity on the leaf tip
-            const Color c = (i + step) % 3 == 0 ? frondDark : frond;
-            img.SetPixel(static_cast<int>(x), static_cast<int>(y), c);
-            if (step < 8) img.SetPixel(static_cast<int>(x), static_cast<int>(y) + 1, frondDark);
-        }
-    }
-    // Fruit bunches under the crown.
-    img.FillRect(10, 12, 2, 2, fruit);
-    img.FillRect(15, 12, 2, 2, fruit);
-    img.SetPixel(10, 12, Color::FromHex(0xE8743B));
-    return img;
 }
 
 engine::Rect GetSpriteSource(SpriteId id) {

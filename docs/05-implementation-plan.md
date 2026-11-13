@@ -82,6 +82,8 @@ Penyebaran & sawit 13/11/2026 (branch yang sama dengan sisa Tahap 2):
 - **Verifikasi**: build Debug & Release 0 warning; gim berhasil dibuka sampai menu. Uji headless **71 pengecekan lolos**: aturan menang/kalah, tile/gosong, pohon jadi sawit setelah ~30,7 detik, penyebaran pertama tepat di 12,0 detik, api lemah tidak menyebar, satu pohon tidak pernah punya dua api. Simulasi stage penuh: **tanpa pemain selalu kalah** karena sawit (detik 67–91, 3 seed); **bot sederhana selalu menang** (detik 27–44, 5 seed). Bot terbang lurus tanpa terhalang pohon, jadi pemain sungguhan lebih lambat. Angka balancing masih placeholder (Tahap 7).
 - **Belum diuji manual:** rasa tekanan waktu, keterbacaan sawit & pohon gosong, panel waktu/banner, layar hasil — mohon dicoba (`.\run`).
 
+Aset asli 13/11/2026: sprite api & sawit placeholder (gambar kode) diganti `items/fire.png` dan `items/palm_oil_tree.png`; penyemprot (`items/sprayer_*`) dan semburan air (`items/water_spray_*`) ditambahkan (detail di `04-characters-assets.md`). Nosel semprotan dipindah ke ujung penyemprot (12 px dari pemain). Dicek lewat screenshot gim: api, sawit, penyemprot kiri/kanan, dan semburan tampil benar. Uji headless 108 + 71 tetap lolos.
+
 ## Tahap 4 — Satwa & AI (16/11)
 
 - [ ] Orang utan, bekantan, burung hantu (entitas + sprite 4 arah)
@@ -191,6 +193,7 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 | 13/11/2026 | Pohon yang dipadamkan tetap dihitung hutan (hanya bekas gosong visual). "Lahan hangus" sebagai state gameplay ditunda ke Tahap 5 | 05 menyebut "hangus jika perlu"; baru dibutuhkan saat anak buah menanam bibit sawit di lahan hangus |
 | 13/11/2026 | Penyebaran = loncat ke pohon acak dalam radius 2 tile (bukan hanya tetangga langsung) | Pohon di peta jarang (±12%); dengan tetangga langsung api hampir tidak pernah menyebar |
 | 13/11/2026 | Angka awal Tahap 3: timer 150 s, sawit kalah 15%, jeda sebar 12 s (hanya api ≥50%), pohon → sawit 30 s | Placeholder di `GameConfig.h`; simulasi: tanpa pemain kalah ±70–90 s, bot sederhana menang ±30–45 s |
+| 13/11/2026 | Aset item dari tim aset menggantikan placeholder api & sawit; animasi api dari satu gambar (cermin + goyang), bukan frame gambar tangan | Aset hanya 1 gambar api; ganti dengan animasi berframe jika tim aset membuatnya |
 | 06/11/2026 | Contoh dosen = kode buku *Game Programming in C++* (Madhav); dipakai sebagai referensi, **kodenya tidak disalin** | Aturan engine sendiri |
 | 09/11/2026 | Revisi HUD eksplorasi: judul lokasi terbuka dengan lencana, peta kertas lipat dengan kompas utara dan margin koordinat, tombol WASD tersusun spasial | Permintaan perbaikan visual halaman gameplay; memakai renderer pixel internal tanpa dependency baru |
 | 09/11/2026 | Menu start diselaraskan dengan HUD: logo asli dipertahankan, lencana kawasan, catatan kontrol kertas, tombol mulai warna krem dengan hover, font pixel bersama | Revisi visual permintaan pengguna; kontrol Enter/Spasi/klik dan Esc tetap berlaku |

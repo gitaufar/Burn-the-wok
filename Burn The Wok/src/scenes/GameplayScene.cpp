@@ -34,13 +34,19 @@ GameplayScene::GameplayScene()
 void GameplayScene::OnEnter() {
     m_player.LoadArtwork();
     m_atlas = std::make_unique<engine::Texture>(BuildPlaceholderAtlas());
+    m_fireSprite = LoadSprite("assets/items/fire.png");
+    m_sawitSprite = LoadSprite("assets/items/palm_oil_tree.png");
+    m_sprayerLeft = LoadSprite("assets/items/sprayer_left.png");
+    m_sprayerRight = LoadSprite("assets/items/sprayer_right.png");
+    m_waterSprayLeft = LoadSprite("assets/items/water_spray_left.png");
+    m_waterSprayRight = LoadSprite("assets/items/water_spray_right.png");
     m_entities.Clear();
-    m_fireSystem = std::make_unique<FireSystem>(*m_atlas, config::FireSeed);
+    m_fireSystem = std::make_unique<FireSystem>(
+        FireArt{m_atlas.get(), m_fireSprite.texture.get(), m_fireSprite.source}, config::FireSeed);
     m_fireSystem->IgniteRandomTrees(m_entities, m_map, config::InitialFireCount);
     const engine::Image tree = engine::Image::LoadFromFile("assets/environment/Tree.png");
     m_treeSource = tree.GetContentBounds(16);
     m_treeTexture = std::make_unique<engine::Texture>(tree);
-    m_sawitTexture = std::make_unique<engine::Texture>(BuildSawitImage());
     RebuildMinimap();
 
     engine::Image vignette(128, 72);
@@ -97,7 +103,9 @@ void GameplayScene::Update(float dt) {
     const bool trigger = input.IsMouseDown(engine::MouseButton::Left);
     if (trigger) {
         m_player.Aim(aim);
+        if (aim != Vec2{}) m_aim = aim;
     }
+    m_triggerHeld = trigger;
     m_sprayer.Update(dt, trigger, m_player.GetNozzlePosition(aim), aim, m_player.GetTank(), m_entities);
 
     // Debug: light the tree under the cursor (fires do not spread until Stage 3).
@@ -122,6 +130,38 @@ void GameplayScene::Update(float dt) {
         if (m_endTimer >= config::ResultDelay) {
             FinishStage();
         }
+    }
+}
+
+GameplayScene::Sprite GameplayScene::LoadSprite(const char* path) {
+    const engine::Image image = engine::Image::LoadFromFile(path);
+    // Trim the transparent canvas so sizes are based on what is actually drawn.
+    return {std::make_unique<engine::Texture>(image), image.GetContentBounds(16)};
+}
+
+void GameplayScene::DrawSprayGear(float alpha) {
+    if (!m_triggerHeld) return;
+    engine::SpriteBatch& batch = App().GetSpriteBatch();
+    const Vec2 center = m_player.GetRenderPosition(alpha);
+    const bool right = m_aim.x >= 0.0f;
+
+    // The sprayer is held at hand height on the side the ranger aims at.
+    const Sprite& gear = right ? m_sprayerRight : m_sprayerLeft;
+    const float gh = 12.0f;
+    const float gw = std::round(gh * gear.source.w / gear.source.h);
+    const float gx = right ? center.x - 3.0f : center.x + 3.0f - gw;
+    batch.Draw(*gear.texture, {std::round(gx), std::round(center.y - 4.0f), gw, gh}, gear.source);
+
+    // Water burst leaving the nozzle, only while water actually comes out and the aim
+    // is mostly sideways (the images only point left or right).
+    if (m_sprayer.IsSpraying() && std::abs(m_aim.x) > 0.35f) {
+        const Sprite& burst = right ? m_waterSprayRight : m_waterSprayLeft;
+        const float bh = std::round(10.0f + std::sin(m_time * 30.0f));
+        const float bw = std::round(bh * burst.source.w / burst.source.h);
+        const Vec2 nozzle = m_player.GetNozzlePosition(m_aim) + (center - m_player.GetPosition());
+        const float bx = right ? nozzle.x - 2.0f : nozzle.x + 2.0f - bw;
+        batch.Draw(*burst.texture, {std::round(bx), std::round(nozzle.y - bh * 0.5f), bw, bh}, burst.source,
+                   Color::White().WithAlpha(220));
     }
 }
 
@@ -230,10 +270,16 @@ void GameplayScene::Draw(float alpha) {
     const auto visibleArea = m_camera.GetVisibleArea();
     const float playerFeetY = m_player.GetRenderFeetY(alpha);
     m_map.DrawGround(batch, *m_atlas, visibleArea, m_time);
-    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitTexture, visibleArea, playerFeetY, false);
+    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
+                    visibleArea, playerFeetY, false);
     DrawFires(alpha, playerFeetY, false);
+    // Aiming up: the sprayer is behind the ranger's back.
+    const bool gearBehind = m_player.GetFacing() == Facing::Up;
+    if (gearBehind) DrawSprayGear(alpha);
     m_player.Draw(batch, *m_atlas, alpha, static_cast<float>(m_zoom));
-    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitTexture, visibleArea, playerFeetY, true);
+    if (!gearBehind) DrawSprayGear(alpha);
+    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
+                    visibleArea, playerFeetY, true);
     DrawFires(alpha, playerFeetY, true);
 
     // The spray arcs over everything; smoke and steam rise above the canopy.
@@ -332,8 +378,9 @@ void GameplayScene::DrawOverlay(float alpha) {
 
         const int fires = m_entities.Count<Fire>();
         if (fires > 0) {
-            batch.Draw(*m_atlas, {std::round((hx+5)*s), std::round((hy+29)*s), 9*s, 9*s},
-                       GetSpriteSource(SpriteId::FireA));
+            const float iconW = std::round(10.0f * m_fireSprite.source.w / m_fireSprite.source.h);
+            batch.Draw(*m_fireSprite.texture, {std::round((hx+6)*s), std::round((hy+28)*s), iconW*s, 10*s},
+                       m_fireSprite.source);
             text("API: " + std::to_string(fires), hx+17, hy+31, Color::FromHex(0xFFC14D));
             text("PADAM: " + std::to_string(m_firesPutOut), hx+84, hy+31, shade);
         } else {

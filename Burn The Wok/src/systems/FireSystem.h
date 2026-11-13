@@ -1,5 +1,7 @@
 #pragma once
 
+#include "entities/Fire.h"
+
 #include <random>
 
 namespace engine {
@@ -16,8 +18,8 @@ class ForestMap;
 // The Fire entity itself only knows its own state.
 class FireSystem {
 public:
-    // atlas is handed to every Fire it creates and must outlive them.
-    FireSystem(const engine::Texture& atlas, unsigned seed) : m_atlas(&atlas), m_rng(seed) {}
+    // art is handed to every Fire it creates; its textures must outlive them.
+    FireSystem(const FireArt& art, unsigned seed) : m_art(art), m_rng(seed) {}
 
     // What happened during one Update().
     struct StepResult {
@@ -47,7 +49,7 @@ public:
     StepResult Update(engine::EntityWorld& world, ForestMap& map, float dt);
 
 private:
-    const engine::Texture* m_atlas;
+    FireArt m_art;
     std::mt19937 m_rng;
 };
 
