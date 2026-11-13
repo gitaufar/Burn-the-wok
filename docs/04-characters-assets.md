@@ -101,3 +101,72 @@ _Dicek 06/11/2026: belum ada item yang ditemukan di repo, jadi belum ada yang di
 - [ ] UI: tombol, bar air, bar waktu, ikon bintang, layar menang/kalah
 - [ ] SFX: semprot, api, satwa, sabotase, UI; BGM menu & gameplay
 - [ ] Lisensi/sumber tiap aset eksternal (jika ada) — catat untuk laporan
+
+## Daftar audio (13/11/2026)
+
+Lokasi: `Burn The Wok/assets/audio/` dengan subfolder `sfx/`, `music/`, `voice/`. Nama file `snake_case`; varian diberi akhiran `_1`, `_2`, dst. Pemutar audio (mixer buatan sendiri) baru dibuat di Tahap 6, jadi file hanya disiapkan dulu.
+
+Prioritas: **W** = wajib, **S** = sebaiknya ada, **O** = opsional. Kolom "Sumber/lisensi" diisi tim untuk laporan.
+
+### Dari daftar tim
+
+| # | File | Jenis | Varian | Loop | Pri | Dipicu saat | Sumber/lisensi |
+|---|---|---|---|---|---|---|---|
+| 1 | `sfx/ui_click` | SFX | 2 | tidak | W | klik tombol | |
+| 2 | `music/intro` | Musik | 1 | ya | W | menu utama | |
+| 3 | `voice/hey_antek_aseng` | Suara | 1-2 | tidak | W | antek/Wowo muncul atau mulai sabotase | |
+| 4 | `sfx/win` | Jingle | 1 | tidak | W | layar menang | |
+| 5 | `sfx/lose` | Jingle | 1 | tidak | W | layar kalah | |
+| 6 | `sfx/animal_saved` | SFX | 1-3 | tidak | W | satwa selamat | |
+| 7 | `sfx/tree_to_palm` | SFX | 1-2 | tidak | W | pohon berubah jadi sawit | |
+| 8 | `sfx/water_spray` | SFX | 1 | ya (mulai/berhenti) | W | menyemprot air | |
+| 9 | `sfx/footstep` | SFX | 3-4 | tidak | W | langkah pemain (acak, selang waktu tetap) | |
+| 10 | `sfx/fire_out` | SFX | 2 | tidak | W | api padam | |
+| 11 | `music/sabotage_tension` | Musik | 1 | ya | W | menghadapi sabotase (stage 2-3) | |
+
+### Usulan tambahan
+
+| # | File | Jenis | Varian | Loop | Pri | Dipicu saat |
+|---|---|---|---|---|---|---|
+| 12 | `sfx/fire_loop` | SFX | 1 | ya | W | ada api di layar; volume naik sesuai jumlah api |
+| 13 | `sfx/fire_spread` | SFX | 3 | tidak | W | api menyebar ke pohon baru |
+| 14 | `music/gameplay` | Musik | 1 per stage (1-3) | ya | W | selama bermain; intensitas naik di stage akhir |
+| 15 | `sfx/water_refill` | SFX | 1 | tidak/ya | W | isi ulang di sumber air |
+| 16 | `sfx/tank_empty` | SFX | 1 | tidak | W | menyemprot saat air habis |
+| 17 | `sfx/timer_warning` | SFX | 1 | ya | S | 10 detik terakhir |
+| 18 | `sfx/tree_burning` | SFX | 2 | tidak | S | pohon terbakar lalu hangus (derak kayu) |
+| 19 | `sfx/animal_panic_orangutan`, `_bekantan`, `_burung_hantu` | SFX | 2 per hewan | tidak | S | satwa panik |
+| 20 | `sfx/animal_burned` | SFX | 1 | tidak | S | satwa terbakar |
+| 21 | `sfx/saboteur_ignite` | SFX | 2 | tidak | S | antek menyebar api |
+| 22 | `sfx/saboteur_plant_seed` | SFX | 2 | tidak | S | antek menanam bibit sawit |
+| 23 | `sfx/boss_appear` | Stinger | 1 | tidak | S | Wowo dan Tedduy muncul (stage 3) |
+| 24 | `sfx/stage_start` | Jingle | 1 | tidak | S | stage dimulai |
+| 25 | `sfx/stage_clear_star` | Jingle | 3 (1, 2, 3 bintang) | tidak | S | akhir stage |
+| 26 | `sfx/ui_hover` | SFX | 1 | tidak | O | kursor di atas tombol |
+| 27 | `sfx/pause_in`, `sfx/pause_out` | SFX | 1 each | tidak | O | pause dan lanjut |
+| 28 | `sfx/footstep_grass`, `sfx/footstep_dirt` | SFX | 3 each | tidak | O | pengganti #9 per permukaan |
+
+### Spesifikasi teknis (usulan)
+
+- **Format: WAV PCM 16-bit, 44,1 kHz.** SFX mono; musik stereo. Belum ada decoder OGG/MP3 yang disetujui (lihat `02-grading-constraints.md`), jadi musik juga WAV dulu.
+- **Durasi:** SFX 0,1-2 dtk; jingle 2-5 dtk; musik loop 30-90 dtk. Ukuran total sebaiknya kecil agar zip rilis tidak membengkak (musik WAV stereo ±10 MB per menit).
+- **Loop:** titik awal dan akhir harus menyambung tanpa klik. Potong di titik nol (zero crossing).
+- **Volume:** normalisasi puncak sekitar -3 dB; musik sedikit lebih pelan dari SFX. Mixer nanti punya volume terpisah untuk musik dan efek.
+- **Variasi:** putar varian secara acak (jangan varian yang sama dua kali berturut-turut) agar suara berulang tidak terdengar monoton.
+- **Lisensi:** catat sumber dan lisensi tiap file (buatan sendiri, CC0, atau bebas royalti) di kolom "Sumber/lisensi". Wajib untuk laporan.
+
+### Status audio (13/11/2026, branch `feat/add-audio`)
+
+Folder: `Burn The Wok/assets/audio/{sfx,music,voice}/`. Sumber, pembuat, dan lisensi (semua CC0) per file: `assets/audio/CREDITS.md`. File yang berasal dari tim (bukan CC0 terverifikasi) ditandai terpisah di `CREDITS.md`; lengkapi sumbernya sebelum laporan final.
+
+**Sudah ada (dari sumber CC0):** #1 `ui_click_1-2`, #2 `music/intro`, #4 `win`, #5 `lose`, #6 `animal_saved_1-3`, #7 `tree_to_palm`, #8 `water_spray` (loop), #9 `footstep_1-4`, #10 `fire_out_1-2`, #11 `music/sabotage_tension`, #12 `fire_loop`, #13 `fire_spread_1-3`, #14 `music/gameplay`, #15 `water_refill`, #16 `tank_empty`, #17 `timer_warning` (loop), #18 `tree_burning_1-2`, #21 `saboteur_ignite`, #22 `saboteur_plant_seed`, #23 `boss_appear`, #24 `stage_start`, #25 `stage_clear_star`, #26 `ui_hover`, #27 `pause_in`/`pause_out`.
+
+**Dari tim (13-14/11/2026):** `voice/hey_antek_aseng`, `footstep_grass_1-3` (dari satu langkah, 2 varian digeser nadanya), `animal_burned` (potongan suara api hutan), serta file buatan/pilihan tim yang menggantikan pilihan awal: `animal_panic_burung_hantu`, `animal_panic_orangutan`, `animal_panic_bekantan`, `boss_appear`, `stage_start`, `stage_clear_star` (satu suara untuk 1-3 bintang), `tree_to_palm`, `saboteur_plant_seed`, `saboteur_ignite`, dan `music/gameplay`. Lisensi file-file ini belum diverifikasi, lihat `assets/audio/CREDITS.md`.
+
+**Masih kosong:** langkah tanah terpisah (opsional; sementara `footstep_1-4` generik); suara satwa asli bila nanti ingin diganti.
+
+**Catatan teknis:**
+- Musik berformat **OGG** (bukan WAV) agar ukuran wajar: 4 lagu total ±7,5 MB, sedangkan WAV stereo bisa 15 MB atau lebih per lagu. Pemutarnya butuh decoder OGG; ini dependency kategori (b), tanya dosen dulu (lihat `05-implementation-plan.md`, Log Keputusan).
+- Satu lagu `music/gameplay` dipakai untuk semua stage.
+- `fire_spread_*` dan `ui_click_*` sangat pendek (0,03-0,1 dtk). Bila terasa kurang, cari yang lebih panjang.
+- Total ukuran audio ±14 MB.
