@@ -20,6 +20,8 @@ Kebutuhan di laptop yang membuat zip: Visual Studio 2026 dengan workload **Deskt
 **Cara B — dari terminal** (PowerShell atau terminal VS Code, di root repo):
 
 ```powershell
+.\run package
+# atau langsung:
 powershell -ExecutionPolicy Bypass -File tools\package-release.ps1
 ```
 

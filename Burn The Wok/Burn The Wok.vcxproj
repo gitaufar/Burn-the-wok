@@ -91,7 +91,14 @@
     <ClInclude Include="src\GameConfig.h" />
     <ClInclude Include="src\art\PlaceholderArt.h" />
     <ClInclude Include="src\art\PixelText.h" />
+    <ClInclude Include="src\entities\Fire.h" />
+    <ClInclude Include="src\entities\Particle.h" />
     <ClInclude Include="src\entities\Player.h" />
+    <ClInclude Include="src\entities\WaterDrop.h" />
+    <ClInclude Include="src\systems\FireSystem.h" />
+    <ClInclude Include="src\systems\Sprayer.h" />
+    <ClInclude Include="src\systems\StageRules.h" />
+    <ClInclude Include="src\systems\WaterTank.h" />
     <ClInclude Include="src\scenes\GameplayScene.h" />
     <ClInclude Include="src\scenes\MenuScene.h" />
     <ClInclude Include="src\scenes\ResultScene.h" />
@@ -100,7 +107,12 @@
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\art\PlaceholderArt.cpp" />
+    <ClCompile Include="src\entities\Fire.cpp" />
+    <ClCompile Include="src\entities\Particle.cpp" />
     <ClCompile Include="src\entities\Player.cpp" />
+    <ClCompile Include="src\entities\WaterDrop.cpp" />
+    <ClCompile Include="src\systems\FireSystem.cpp" />
+    <ClCompile Include="src\systems\Sprayer.cpp" />
     <ClCompile Include="src\scenes\GameplayScene.cpp" />
     <ClCompile Include="src\scenes\MenuScene.cpp" />
     <ClCompile Include="src\scenes\ResultScene.cpp" />

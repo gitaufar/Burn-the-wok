@@ -64,6 +64,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;SDL_MAIN_HANDLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <!-- /MT: static C++ runtime. Must match the game project (see its comment). -->
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(EngineIncludeDirs);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -74,6 +76,8 @@
     <ClInclude Include="include\engine\core\Log.h" />
     <ClInclude Include="include\engine\core\Scene.h" />
     <ClInclude Include="include\engine\core\SceneManager.h" />
+    <ClInclude Include="include\engine\entity\Entity.h" />
+    <ClInclude Include="include\engine\entity\EntityWorld.h" />
     <ClInclude Include="include\engine\graphics\Camera2D.h" />
     <ClInclude Include="include\engine\graphics\Color.h" />
     <ClInclude Include="include\engine\graphics\Image.h" />
@@ -93,6 +97,7 @@
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
     <ClCompile Include="src\core\SceneManager.cpp" />
+    <ClCompile Include="src\entity\EntityWorld.cpp" />
     <ClCompile Include="src\graphics\Camera2D.cpp" />
     <ClCompile Include="src\graphics\Image.cpp" />
     <ClCompile Include="src\graphics\Shader.cpp" />

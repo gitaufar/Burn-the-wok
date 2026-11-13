@@ -43,9 +43,23 @@ Diverifikasi 06/11/2026: kedua konfigurasi sukses, 0 warning.
 
 ### Menjalankan gim
 
+- Terminal (mirip `npm run`, dari root repo; skrip: `run.bat` → `tools/dev.ps1`):
+
+  | Perintah | Fungsi |
+  |---|---|
+  | `.\run` | build Debug lalu main |
+  | `.\run release` | build Release lalu main |
+  | `.\run build` | build Debug saja |
+  | `.\run play` | main pakai build Debug terakhir (tanpa build) |
+  | `.\run package` | build Release + buat zip di `dist\` (= `tools\package-release.bat`) |
+  | `.\run clean` | hapus folder hasil build |
+  | `.\run help` | daftar perintah |
+
+  Di Command Prompt cukup `run`; di PowerShell/terminal VS Code wajib `.\run`. Working directory gim = folder `Burn The Wok/`, sama seperti F5.
 - IDE: F5 (debug) / Ctrl+F5. Working directory saat debug = folder `Burn The Wok/` (penting untuk path aset nanti).
 - Manual: `Debug\Burn The Wok.exe` atau `Release\Burn The Wok.exe` (relatif ke root repo). `SDL2.dll` dan `glew32.dll` otomatis disalin ke folder itu saat build (target `CopyEngineRuntimeDlls` di `Engine/Engine.props`).
-- Kontrol demo: Enter/Spasi = mulai, WASD/panah = gerak, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), F3 = tampilkan hitbox & tile padat (debug), Esc = kembali ke menu / keluar dari menu.
+- Tujuan: padamkan semua api sebelum waktu habis; kalah jika sawit mencapai batas atau waktu habis saat api masih menyala.
+- Kontrol: Enter/Spasi = mulai, WASD/panah = gerak, **tahan klik kiri = semprot air ke arah kursor**, berdiri di tepi kolam = isi ulang air, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), F3 = tampilkan hitbox & tile padat (debug), F4 = bakar pohon di bawah kursor (debug), Esc = kembali ke menu / keluar dari menu.
 
 ## Dependency yang disetujui
 
@@ -100,6 +114,7 @@ Burn The Wok/                         # root repo (git, branch main)
 │   ├── Engine.props                  # di-import proyek game: include path, link SDL2/GLEW/GL, salin DLL
 │   ├── include/engine/               # header publik  -> #include <engine/...>
 │   │   ├── core/      Application, Scene, SceneManager, Log
+│   │   ├── entity/    Entity, EntityWorld (objek dinamis: spawn/update/draw/query)
 │   │   ├── graphics/  Window, Shader, Texture, Image, SpriteBatch, Camera2D, Color
 │   │   ├── input/     Input, Keys
 │   │   ├── math/      Vec2, Rect, Mat4
@@ -111,8 +126,10 @@ Burn The Wok/                         # root repo (git, branch main)
 │       ├── main.cpp                  # buat Application, jalankan MenuScene
 │       ├── GameConfig.h              # konstanta tuning (placeholder)
 │       ├── art/       PlaceholderArt # atlas sprite yang digambar lewat kode
-│       ├── entities/  Player
-│       ├── world/     ForestMap      # peta tile placeholder
+│       ├── entities/  Player, Fire, WaterDrop, Particle
+│       ├── systems/   WaterTank (logika air), Sprayer (semprotan), FireSystem (nyala, sebar, sawit, air vs api),
+│       │              StageRules (timer, menang/kalah)
+│       ├── world/     ForestMap      # peta tile placeholder (rumput, tanah, pohon, air, sawit) + bekas gosong
 │       └── scenes/    MenuScene, GameplayScene, ResultScene (Menang/Kalah)
 ├── tools/
 │   ├── package-release.bat / .ps1   # build Release + buat zip di dist\ (lihat docs/07)
@@ -123,7 +140,7 @@ Burn The Wok/                         # root repo (git, branch main)
 └── CLAUDE.md
 ```
 
-Folder yang akan ditambah sesuai tahap: `engine/ai` (T4), `engine/ui`, `engine/audio`, `engine/particles` (T6); di Game: `systems/` (T2–T5), `config/` data stage (T5), `assets/` (saat aset tersedia).
+Folder yang akan ditambah sesuai tahap: `engine/ai` (T4), `engine/ui`, `engine/audio`, `engine/particles` (T6); di Game: `config/` data stage (T5). `systems/` dan `entity/` sudah ada sejak T2.
 
 Aturan dependensi: `Game → Engine`. Dilarang `Engine → Game`. Ditegakkan oleh build: proyek Engine tidak punya include path ke folder Game.
 
@@ -140,7 +157,25 @@ Aturan dependensi: `Game → Engine`. Dilarang `Engine → Game`. Ditegakkan ole
 | `graphics/Camera2D` | Kamera 2D | Posisi = titik tengah layar, zoom = piksel layar per unit dunia; proyeksi ortografis y-ke-bawah; `ScreenToWorld`/`WorldToScreen`; pixel snapping |
 | `input/Input` | Keyboard & mouse | Down/Pressed/Released. "Previous" diperbarui per **fixed update**, bukan per frame, sehingga tombol tidak terbaca dua kali/terlewat |
 | `math/*` | Vec2, Rect, Mat4 | Header-only |
+| `entity/Entity`, `EntityWorld` (T2) | Objek dinamis (api, tetes air, asap; nanti satwa & musuh) | `Entity` = posisi + posisi sebelumnya (interpolasi) + flag hidup + `Update`/`Draw` virtual. `EntityWorld` memiliki semua entity (`unique_ptr`): `Spawn<T>`, `Update` (simpan posisi lama → update → hapus yang mati → tambah spawn baru), `ForEach<T>`/`Count<T>` (filter tipe lewat `dynamic_cast`). Spawn selama `Update`/`ForEach` ditunda agar vector tidak berubah saat diiterasi. Sengaja bukan ECS |
 | `physics/Collision` (T2) | Tes overlap, query tile, gerak di grid tile | Engine tidak tahu arti tile; Game menjawab "apakah tile (x, y) padat?" lewat callback. Tepi yang hanya bersentuhan tidak dihitung overlap (sama dengan `Rect::Contains`). `MoveAndSlide`: sumbu X dulu lalu Y (meluncur di dinding), cek semua kolom/baris yang dilewati (anti tembus), kotak yang sudah di dalam tile padat tetap bisa keluar |
+
+## Modul Game (Tahap 2)
+
+| Modul | Isi |
+|---|---|
+| `entities/Fire` | Api di satu tile pohon. Intensitas = HP; tumbuh lagi jika tidak disemprot; area kena = lingkaran yang mengecil |
+| `entities/WaterDrop` | Satu tetes semprotan; terbang lurus dengan hambatan udara, hilang setelah umur habis (= jangkauan) |
+| `entities/Particle` | Kepulan asap/uap yang naik, membesar, lalu memudar |
+| `systems/WaterTank` | Logika murni tangki air: `TryUse`, `Refill`, kapasitas. Tanpa input/gambar, mudah diuji |
+| `systems/Sprayer` | Klik kiri ditahan → tetes dengan laju tetap (bukan per frame), biaya air per tetes, sebaran acak |
+| `systems/FireSystem` | Memilih pohon yang terbakar (yang bisa didekati), `Ignite`, dan tumbukan tetes ↔ api (lingkaran–lingkaran) → kurangi intensitas, api padam → asap. **T3:** `Update` = gosongkan pohon, pohon terbakar 30 s → tile `Sawit`, api kuat menyebar ke pohon acak dalam radius 2 (percikan dikumpulkan dulu lalu dinyalakan setelah loop agar satu pohon tidak dapat dua api) |
+| `systems/StageRules` (T3) | Logika murni timer & hasil stage (`Playing`/`Won`/`LostSawit`/`LostTime`); persentase hutan/sawit relatif ke pohon awal. Hasil tidak berubah setelah ditentukan |
+| `world/ForestMap` (T3) | Tile bisa berubah (`SetTile` + `GetRevision` agar minimap tahu kapan digambar ulang), `IsBurnable` (pohon non-border), `CountTiles`, nilai gosong per tile |
+| `scenes/ResultScene` (T3) | Menerima `Summary` (alasan + statistik) dari gameplay |
+| `entities/Player` | Ditambah: tangki air, isi ulang saat hitbox (diperbesar `RefillReach`) menyentuh tile air, `Aim` (menghadap arah semprot), posisi nosel |
+
+Urutan per update di `GameplayScene`: gerak pemain + isi ulang → semprot (spawn tetes) → `EntityWorld::Update` → `FireSystem::ResolveWaterHits` → `FireSystem::Update` (sebar/sawit) → `StageRules::Update` → (setelah jeda) layar hasil. Gambar: tanah → pohon belakang → api belakang → pemain → pohon depan → api depan → tetes & asap → HUD. Api disortir dengan aturan kedalaman yang sama seperti pohonnya (akar vs kaki pemain).
 
 ## Prinsip desain engine
 
@@ -175,7 +210,7 @@ Aturan dependensi: `Game → Engine`. Dilarang `Engine → Game`. Ditegakkan ole
 
 ```
 SDL events → Input ─┐
-                    ├→ SceneManager.Update(1/60 s) → Scene → [Player, Map, ... (nanti: Systems)]
+                    ├→ SceneManager.Update(1/60 s) → Scene → [Player, Map, Systems → EntityWorld]
 Application loop ───┤
                     └→ SceneManager.Draw(alpha) → Scene → SpriteBatch(Camera2D) → OpenGL → Window.Present
 ```

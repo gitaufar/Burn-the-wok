@@ -16,6 +16,7 @@ namespace game {
 ForestMap::ForestMap(int widthInTiles, int heightInTiles, unsigned seed)
     : m_width(widthInTiles), m_height(heightInTiles) {
     m_tiles.resize(static_cast<std::size_t>(m_width) * m_height, TileType::Grass);
+    m_scorch.resize(m_tiles.size(), 0.0f);
 
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> chance(0.0f, 1.0f);
@@ -52,6 +53,15 @@ ForestMap::ForestMap(int widthInTiles, int heightInTiles, unsigned seed)
             m_tiles[static_cast<std::size_t>(y) * m_width + x] = tile;
         }
     }
+
+    // Carve the trail into the grass as real Dirt tiles (trees and the pond stay).
+    for (int y = 0; y < m_height; ++y) {
+        for (int x = 0; x < m_width; ++x) {
+            if (IsOnTrail(x, y)) {
+                m_tiles[static_cast<std::size_t>(y) * m_width + x] = TileType::Dirt;
+            }
+        }
+    }
 }
 
 TileType ForestMap::GetTile(int x, int y) const {
@@ -63,7 +73,33 @@ TileType ForestMap::GetTile(int x, int y) const {
 
 bool ForestMap::IsSolid(int x, int y) const {
     const TileType tile = GetTile(x, y);
-    return tile == TileType::Tree || tile == TileType::Water;
+    return tile == TileType::Tree || tile == TileType::Water || tile == TileType::Sawit;
+}
+
+void ForestMap::SetTile(int x, int y, TileType type) {
+    if (!IsInside(x, y)) return;
+    m_tiles[static_cast<std::size_t>(y) * m_width + x] = type;
+    ++m_revision;
+}
+
+int ForestMap::CountTiles(TileType type, bool includeBorder) const {
+    int count = 0;
+    for (int y = 0; y < m_height; ++y) {
+        for (int x = 0; x < m_width; ++x) {
+            if (GetTile(x, y) == type && (includeBorder || !IsBorder(x, y))) ++count;
+        }
+    }
+    return count;
+}
+
+float ForestMap::GetScorch(int x, int y) const {
+    return IsInside(x, y) ? m_scorch[static_cast<std::size_t>(y) * m_width + x] : 0.0f;
+}
+
+void ForestMap::AddScorch(int x, int y, float amount) {
+    if (!IsInside(x, y)) return;
+    float& value = m_scorch[static_cast<std::size_t>(y) * m_width + x];
+    value = std::clamp(value + amount, 0.0f, 1.0f);
 }
 
 bool ForestMap::IsBlocked(const engine::Rect& area) const {
@@ -97,7 +133,7 @@ engine::Vec2 ForestMap::GetCenter() const {
     return GetBounds().Center();
 }
 
-bool ForestMap::IsPath(int x, int y) const {
+bool ForestMap::IsOnTrail(int x, int y) const {
     const TileType tile = GetTile(x, y);
     if (tile != TileType::Grass && tile != TileType::GrassFlowers) return false;
     const float cx = m_width * 0.5f;
@@ -135,10 +171,14 @@ void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& at
                                    variation % 3 == 1 ? SpriteId::Grass : SpriteId::GrassDense;
             switch (GetTile(x, y)) {
             case TileType::Grass:
-                batch.Draw(atlas, dest, GetSpriteSource(IsPath(x, y) ? SpriteId::Dirt : grass), tint);
+                batch.Draw(atlas, dest, GetSpriteSource(grass), tint);
                 break;
             case TileType::GrassFlowers:
-                batch.Draw(atlas, dest, GetSpriteSource(IsPath(x, y) ? SpriteId::Dirt : SpriteId::GrassFlowers), tint);
+                batch.Draw(atlas, dest, GetSpriteSource(SpriteId::GrassFlowers), tint);
+                break;
+            case TileType::Dirt:
+            case TileType::Sawit: // plantation soil under the palm
+                batch.Draw(atlas, dest, GetSpriteSource(SpriteId::Dirt), tint);
                 break;
             case TileType::Tree:
                 // Trees have transparent corners, so draw the ground underneath first.
@@ -188,9 +228,9 @@ void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& at
         for (int x = x0; x <= x1; ++x) {
             const TileType tile = GetTile(x, y);
             const unsigned detail = static_cast<unsigned>(x * 317 + y * 167);
-            if (tile == TileType::Tree) {
+            if (tile == TileType::Tree || tile == TileType::Sawit) {
                 batch.Draw(atlas, {x * ts + ts * 0.5f - 12, y * ts + ts - 5, 24, 7}, GetSpriteSource(SpriteId::Shadow));
-            } else if (tile != TileType::Water && !IsPath(x, y)) {
+            } else if (tile != TileType::Water && tile != TileType::Sawit && !IsPath(x, y)) {
                 const bool nearWater = GetTile(x + 1, y) == TileType::Water ||
                     GetTile(x - 1, y) == TileType::Water || GetTile(x, y + 1) == TileType::Water ||
                     GetTile(x, y - 1) == TileType::Water;
@@ -208,8 +248,8 @@ void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& at
 }
 
 void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& treeTexture,
-                          const engine::Rect& treeSource, const engine::Rect& visibleArea,
-                          float playerFeetY, bool foreground) const {
+                          const engine::Rect& treeSource, const engine::Texture& sawitTexture,
+                          const engine::Rect& visibleArea, float playerFeetY, bool foreground) const {
     const float ts = static_cast<float>(config::TileSize);
     // A tree rooted outside the viewport can still have a visible crown.
     const float margin = config::TreeHeight * 1.06f *
@@ -227,14 +267,25 @@ void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& tre
         const float rootY = (y + 1) * ts;
         if ((rootY > playerFeetY) != foreground) continue;
         for (int x = x0; x <= x1; ++x) {
-            if (GetTile(x, y) == TileType::Tree) {
+            const TileType tile = GetTile(x, y);
+            if (tile == TileType::Tree) {
                 const float variation = 0.94f + static_cast<float>((x * 13 + y * 7) % 5) * 0.03f;
                 const float height = config::TreeHeight * variation;
                 const float width = treeSource.w * height / treeSource.h;
+                // Scorched trees fade toward charcoal.
+                const engine::Color base = engine::Color::FromHex((x * 13 + y * 7) % 3 == 0 ? 0xDEE4CA : 0xF2EDDC);
+                const engine::Color charred = engine::Color::FromHex(0x5E4B42);
+                const float s = GetScorch(x, y) * 0.85f;
+                auto mix = [s](std::uint8_t a, std::uint8_t b) {
+                    return static_cast<std::uint8_t>(a + (b - a) * s);
+                };
                 batch.Draw(treeTexture,
                            {x * ts + (ts - width) * 0.5f, rootY - height, width, height},
-                           treeSource, engine::Color::FromHex(
-                               (x * 13 + y * 7) % 3 == 0 ? 0xDEE4CA : 0xF2EDDC));
+                           treeSource, {mix(base.r, charred.r), mix(base.g, charred.g), mix(base.b, charred.b), 255});
+            } else if (tile == TileType::Sawit) {
+                const float width = static_cast<float>(sawitTexture.GetWidth());
+                const float height = static_cast<float>(sawitTexture.GetHeight());
+                batch.Draw(sawitTexture, {x * ts + (ts - width) * 0.5f, rootY - height, width, height});
             }
         }
     }

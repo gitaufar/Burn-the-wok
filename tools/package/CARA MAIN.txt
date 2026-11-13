@@ -9,12 +9,20 @@ CARA MENJALANKAN
    klik "More info" lalu "Run anyway".
    (Muncul karena game belum punya sertifikat digital berbayar, bukan karena virus.)
 
+TUJUAN
+  Padamkan semua api sebelum waktu habis. Api yang dibiarkan menyebar ke pohon
+  lain, dan pohon yang terbakar terlalu lama berubah menjadi kebun sawit.
+  Kalah jika lahan sawit mencapai batas, atau waktu habis saat api masih menyala.
+
 KONTROL
   Enter / Spasi   : mulai dari menu
   W A S D / panah : bergerak
+  Klik kiri (tahan): semprot air ke arah kursor mouse
+  Isi ulang air   : berdiri di tepi kolam
   Roda mouse      : zoom
   Esc             : kembali ke menu / keluar dari menu
   F1 / F2         : (sementara, untuk uji) langsung ke layar menang / kalah
+  F4              : (sementara, untuk uji) bakar pohon di bawah kursor mouse
 
 KEBUTUHAN SISTEM
   - Windows 10 atau 11 (32-bit atau 64-bit)
