@@ -133,7 +133,8 @@ Burn The Wok/                         # root repo (git, branch main)
 │       └── scenes/    MenuScene, GameplayScene, ResultScene (Menang/Kalah)
 ├── tools/
 │   ├── package-release.bat / .ps1   # build Release + buat zip di dist\ (lihat docs/07)
-│   └── package/CARA MAIN.txt        # petunjuk pemain yang ikut di zip
+│   ├── package/CARA MAIN.txt        # petunjuk pemain yang ikut di zip
+│   └── assets/compose_ranger.py     # alat pembuat aset (Python + Pillow, bukan dependency gim): sprite penjaga hutan + penyemprot
 ├── dist/                             # hasil zip (tidak di-commit)
 ├── docs/
 ├── .gitignore

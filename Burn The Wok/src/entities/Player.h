@@ -35,10 +35,13 @@ public:
     // Also refills the tank while the player stands next to water.
     void Update(const engine::Input& input, float dt, const ForestMap& map);
 
-    // Turns the ranger toward a (normalized) direction, e.g. where they are spraying.
-    // Overrides the facing from movement for this update.
+    // Turns the ranger toward a (normalized) direction and raises the spray gun: until
+    // the next Update() the "holding the gun" sprites are drawn instead of the walking
+    // ones. Call it every update while the trigger is held. Overrides the facing from
+    // movement for this update.
     void Aim(engine::Vec2 direction);
-    // World point where water leaves the sprayer for a given aim direction.
+    // World point where water leaves the spray gun for a given aim direction: the
+    // nozzle of the gun as drawn in the sprite for the facing that aim produces.
     engine::Vec2 GetNozzlePosition(engine::Vec2 aim) const;
 
     WaterTank& GetTank() { return m_tank; }
@@ -63,10 +66,14 @@ public:
     Facing GetFacing() const { return m_facing; }
 
 private:
-    std::array<std::unique_ptr<engine::Texture>, 16> m_frames;
-    std::array<engine::Rect, 16> m_sources{};
+    // [0..15] walking (tank on the back), [16..31] spraying (gun in the hands);
+    // inside each set: Facing * 4 + walk frame.
+    static constexpr int FramesPerSet = 16;
+    std::array<std::unique_ptr<engine::Texture>, FramesPerSet * 2> m_frames;
+    std::array<engine::Rect, FramesPerSet * 2> m_sources{};
     float m_artScale = 1.0f;
     void UpdateFacing(engine::Vec2 direction);
+    static Facing FacingFor(engine::Vec2 direction); // dominant axis of direction
 
     // Hitbox size and placement relative to m_position (the sprite center).
     static constexpr float HitboxWidth = 10.0f;
@@ -78,6 +85,7 @@ private:
     Facing m_facing = Facing::Down;
     float m_walkTime = 0.0f;
     bool m_moving = false;
+    bool m_aiming = false; // Aim() was called since the last Update()
     WaterTank m_tank{config::TankCapacity};
     bool m_refilling = false;
 };

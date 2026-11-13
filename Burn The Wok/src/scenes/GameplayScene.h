@@ -35,8 +35,8 @@ private:
     void DrawOverlay(float alpha);
     void DrawCollisionDebug(float alpha); // inside the world batch (camera space)
     void DrawFires(float alpha, float playerFeetY, bool foreground);
-    // Sprayer in the ranger's hands (while the trigger is held) and the water burst.
-    void DrawSprayGear(float alpha);
+    // Water bursting out of the spray gun's nozzle (the gun itself is part of the ranger sprite).
+    void DrawWaterBurst(float alpha);
     void RebuildMinimap();
     void FinishStage(); // switch to the win/lose screen
 
@@ -51,7 +51,6 @@ private:
     static Sprite LoadSprite(const char* path);
     Sprite m_fireSprite;
     Sprite m_sawitSprite;
-    Sprite m_sprayerLeft, m_sprayerRight;
     Sprite m_waterSprayLeft, m_waterSprayRight;
     int m_minimapRevision = -1; // map revision the minimap was drawn from
     std::unique_ptr<engine::Texture> m_vignette;
@@ -64,7 +63,6 @@ private:
     StageRules m_rules; // after m_map: counts the map's trees when constructed
     int m_firesPutOut = 0;
     engine::Vec2 m_aim{1.0f, 0.0f}; // last spray direction (for drawing)
-    bool m_triggerHeld = false;
     float m_endTimer = 0.0f; // seconds since the outcome was decided
     engine::Camera2D m_camera;
     int m_zoom;

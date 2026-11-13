@@ -36,8 +36,6 @@ void GameplayScene::OnEnter() {
     m_atlas = std::make_unique<engine::Texture>(BuildPlaceholderAtlas());
     m_fireSprite = LoadSprite("assets/items/fire.png");
     m_sawitSprite = LoadSprite("assets/items/palm_oil_tree.png");
-    m_sprayerLeft = LoadSprite("assets/items/sprayer_left.png");
-    m_sprayerRight = LoadSprite("assets/items/sprayer_right.png");
     m_waterSprayLeft = LoadSprite("assets/items/water_spray_left.png");
     m_waterSprayRight = LoadSprite("assets/items/water_spray_right.png");
     m_entities.Clear();
@@ -105,7 +103,7 @@ void GameplayScene::Update(float dt) {
         m_player.Aim(aim);
         if (aim != Vec2{}) m_aim = aim;
     }
-    m_triggerHeld = trigger;
+
     m_sprayer.Update(dt, trigger, m_player.GetNozzlePosition(aim), aim, m_player.GetTank(), m_entities);
 
     // Debug: light the tree under the cursor (fires do not spread until Stage 3).
@@ -139,30 +137,23 @@ GameplayScene::Sprite GameplayScene::LoadSprite(const char* path) {
     return {std::make_unique<engine::Texture>(image), image.GetContentBounds(16)};
 }
 
-void GameplayScene::DrawSprayGear(float alpha) {
-    if (!m_triggerHeld) return;
-    engine::SpriteBatch& batch = App().GetSpriteBatch();
-    const Vec2 center = m_player.GetRenderPosition(alpha);
-    const bool right = m_aim.x >= 0.0f;
+void GameplayScene::DrawWaterBurst(float alpha) {
+    // Only while water actually comes out, and only when the ranger faces sideways:
+    // the burst images point left or right, like the gun in those sprites. Facing up
+    // or down, the drops alone show the stream.
+    const Facing facing = m_player.GetFacing();
+    if (!m_sprayer.IsSpraying() || (facing != Facing::Left && facing != Facing::Right)) return;
 
-    // The sprayer is held at hand height on the side the ranger aims at.
-    const Sprite& gear = right ? m_sprayerRight : m_sprayerLeft;
-    const float gh = 12.0f;
-    const float gw = std::round(gh * gear.source.w / gear.source.h);
-    const float gx = right ? center.x - 3.0f : center.x + 3.0f - gw;
-    batch.Draw(*gear.texture, {std::round(gx), std::round(center.y - 4.0f), gw, gh}, gear.source);
-
-    // Water burst leaving the nozzle, only while water actually comes out and the aim
-    // is mostly sideways (the images only point left or right).
-    if (m_sprayer.IsSpraying() && std::abs(m_aim.x) > 0.35f) {
-        const Sprite& burst = right ? m_waterSprayRight : m_waterSprayLeft;
-        const float bh = std::round(10.0f + std::sin(m_time * 30.0f));
-        const float bw = std::round(bh * burst.source.w / burst.source.h);
-        const Vec2 nozzle = m_player.GetNozzlePosition(m_aim) + (center - m_player.GetPosition());
-        const float bx = right ? nozzle.x - 2.0f : nozzle.x + 2.0f - bw;
-        batch.Draw(*burst.texture, {std::round(bx), std::round(nozzle.y - bh * 0.5f), bw, bh}, burst.source,
-                   Color::White().WithAlpha(220));
-    }
+    const bool right = facing == Facing::Right;
+    const Sprite& burst = right ? m_waterSprayRight : m_waterSprayLeft;
+    const float bh = std::round(9.0f + std::sin(m_time * 30.0f));
+    const float bw = std::round(bh * burst.source.w / burst.source.h);
+    const Vec2 nozzle = m_player.GetNozzlePosition(m_aim) +
+                        (m_player.GetRenderPosition(alpha) - m_player.GetPosition());
+    // The narrow end of the burst starts at the nozzle.
+    const float bx = right ? nozzle.x - 1.0f : nozzle.x + 1.0f - bw;
+    App().GetSpriteBatch().Draw(*burst.texture, {std::round(bx), std::round(nozzle.y - bh * 0.5f), bw, bh},
+                                burst.source, Color::White().WithAlpha(225));
 }
 
 void GameplayScene::FinishStage() {
@@ -273,11 +264,8 @@ void GameplayScene::Draw(float alpha) {
     m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
                     visibleArea, playerFeetY, false);
     DrawFires(alpha, playerFeetY, false);
-    // Aiming up: the sprayer is behind the ranger's back.
-    const bool gearBehind = m_player.GetFacing() == Facing::Up;
-    if (gearBehind) DrawSprayGear(alpha);
     m_player.Draw(batch, *m_atlas, alpha, static_cast<float>(m_zoom));
-    if (!gearBehind) DrawSprayGear(alpha);
+    DrawWaterBurst(alpha);
     m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
                     visibleArea, playerFeetY, true);
     DrawFires(alpha, playerFeetY, true);
