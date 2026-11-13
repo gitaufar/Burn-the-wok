@@ -39,6 +39,18 @@ inline void DrawPixelText(engine::SpriteBatch& batch, std::string_view text,
                     }
                 }
             }
+        } else if (ch == '%' || ch == '/' || ch == '.') {
+            static constexpr unsigned char percent[7] = {24, 25, 2, 4, 8, 19, 3};
+            static constexpr unsigned char slash[7] = {1, 1, 2, 4, 8, 16, 16};
+            static constexpr unsigned char dot[7] = {0, 0, 0, 0, 0, 12, 12};
+            const unsigned char* rows = ch == '%' ? percent : ch == '/' ? slash : dot;
+            for (int row = 0; row < 7; ++row) {
+                for (int col = 0; col < 5; ++col) {
+                    if (rows[row] & (1 << (4 - col))) {
+                        batch.DrawRect({x + col * scale, y + row * scale, scale, scale}, color);
+                    }
+                }
+            }
         } else if (ch == '-') {
             batch.DrawRect({x, y + 3 * scale, 4 * scale, scale}, color);
         } else if (ch == ':') {

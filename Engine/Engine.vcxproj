@@ -76,6 +76,8 @@
     <ClInclude Include="include\engine\core\Log.h" />
     <ClInclude Include="include\engine\core\Scene.h" />
     <ClInclude Include="include\engine\core\SceneManager.h" />
+    <ClInclude Include="include\engine\entity\Entity.h" />
+    <ClInclude Include="include\engine\entity\EntityWorld.h" />
     <ClInclude Include="include\engine\graphics\Camera2D.h" />
     <ClInclude Include="include\engine\graphics\Color.h" />
     <ClInclude Include="include\engine\graphics\Image.h" />
@@ -95,6 +97,7 @@
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
     <ClCompile Include="src\core\SceneManager.cpp" />
+    <ClCompile Include="src\entity\EntityWorld.cpp" />
     <ClCompile Include="src\graphics\Camera2D.cpp" />
     <ClCompile Include="src\graphics\Image.cpp" />
     <ClCompile Include="src\graphics\Shader.cpp" />

@@ -3,6 +3,9 @@
 #include "GameConfig.h"
 #include "art/PlaceholderArt.h"
 #include "art/PixelText.h"
+#include "entities/Fire.h"
+#include "entities/Particle.h"
+#include "entities/WaterDrop.h"
 #include "scenes/MenuScene.h"
 #include "scenes/ResultScene.h"
 
@@ -13,6 +16,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <utility>
 
 namespace game {
 
@@ -23,28 +27,21 @@ using engine::Vec2;
 GameplayScene::GameplayScene()
     : m_map(config::MapWidthTiles, config::MapHeightTiles, config::MapSeed),
       m_player(m_map.GetCenter()),
+      m_sprayer(config::FireSeed + 1),
+      m_rules(config::StageDuration, config::SawitLoseFraction, m_map.CountTiles(TileType::Tree)),
       m_zoom(config::DefaultZoom) {}
 
 void GameplayScene::OnEnter() {
     m_player.LoadArtwork();
     m_atlas = std::make_unique<engine::Texture>(BuildPlaceholderAtlas());
+    m_entities.Clear();
+    m_fireSystem = std::make_unique<FireSystem>(*m_atlas, config::FireSeed);
+    m_fireSystem->IgniteRandomTrees(m_entities, m_map, config::InitialFireCount);
     const engine::Image tree = engine::Image::LoadFromFile("assets/environment/Tree.png");
     m_treeSource = tree.GetContentBounds(16);
     m_treeTexture = std::make_unique<engine::Texture>(tree);
-
-    engine::Image minimap(m_map.GetWidth(), m_map.GetHeight());
-    for (int y = 0; y < m_map.GetHeight(); ++y) {
-        for (int x = 0; x < m_map.GetWidth(); ++x) {
-            Color color = Color::FromHex(0x708457);
-            switch (m_map.GetTile(x, y)) {
-            case TileType::Tree: color = Color::FromHex(0x36573B); break;
-            case TileType::Water: color = Color::FromHex(0x5AADB0); break;
-            default: if (m_map.IsPath(x, y)) color = Color::FromHex(0xC8AF7D); break;
-            }
-            minimap.SetPixel(x, y, color);
-        }
-    }
-    m_minimap = std::make_unique<engine::Texture>(minimap);
+    m_sawitTexture = std::make_unique<engine::Texture>(BuildSawitImage());
+    RebuildMinimap();
 
     engine::Image vignette(128, 72);
     for (int y = 0; y < 72; ++y) {
@@ -59,8 +56,8 @@ void GameplayScene::OnEnter() {
     m_vignette = std::make_unique<engine::Texture>(vignette);
 
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
-                               " - Gameplay | WASD/panah: gerak, roda mouse: zoom, "
-                               "F1: menang, F2: kalah, F3: hitbox, Esc: menu");
+                               " - Gameplay | WASD/panah: gerak, klik kiri: semprot, tepi kolam: isi air, "
+                               "F1: menang, F2: kalah, F3: hitbox, F4: nyalakan api, Esc: menu");
     App().GetWindow().SetClearColor(Color::FromHex(0x1B3027));
 }
 
@@ -92,6 +89,86 @@ void GameplayScene::Update(float dt) {
     }
 
     m_player.Update(input, dt, m_map);
+
+    // Spray toward the mouse. The camera is from the last drawn frame, which is what
+    // the player is looking at when they click.
+    const Vec2 mouseWorld = m_camera.ScreenToWorld(input.GetMousePosition());
+    const Vec2 aim = (mouseWorld - m_player.GetPosition()).Normalized();
+    const bool trigger = input.IsMouseDown(engine::MouseButton::Left);
+    if (trigger) {
+        m_player.Aim(aim);
+    }
+    m_sprayer.Update(dt, trigger, m_player.GetNozzlePosition(aim), aim, m_player.GetTank(), m_entities);
+
+    // Debug: light the tree under the cursor (fires do not spread until Stage 3).
+    if (input.IsKeyPressed(Key::F4)) {
+        const float ts = static_cast<float>(config::TileSize);
+        m_fireSystem->Ignite(m_entities, m_map, static_cast<int>(std::floor(mouseWorld.x / ts)),
+                             static_cast<int>(std::floor(mouseWorld.y / ts)));
+    }
+
+    m_entities.Update(dt);
+    m_firesPutOut += m_fireSystem->ResolveWaterHits(m_entities);
+    m_fireSystem->Update(m_entities, m_map, dt);
+    if (m_map.GetRevision() != m_minimapRevision) {
+        RebuildMinimap();
+    }
+
+    // The outcome is shown in the world for a moment before the result screen.
+    const StageOutcome outcome =
+        m_rules.Update(dt, m_entities.Count<Fire>(), m_map.CountTiles(TileType::Sawit));
+    if (outcome != StageOutcome::Playing) {
+        m_endTimer += dt;
+        if (m_endTimer >= config::ResultDelay) {
+            FinishStage();
+        }
+    }
+}
+
+void GameplayScene::FinishStage() {
+    ResultScene::Summary summary;
+    switch (m_rules.GetOutcome()) {
+    case StageOutcome::Won: summary.reason = "SEMUA API PADAM"; break;
+    case StageOutcome::LostSawit: summary.reason = "LAHAN SAWIT MELEWATI BATAS"; break;
+    case StageOutcome::LostTime: summary.reason = "WAKTU HABIS - API MASIH MENYALA"; break;
+    case StageOutcome::Playing: break;
+    }
+    summary.hasStats = true;
+    summary.forestPercent = static_cast<int>(std::round(m_rules.GetForestFraction() * 100.0f));
+    summary.sawitPercent = static_cast<int>(std::round(m_rules.GetSawitFraction() * 100.0f));
+    summary.firesPutOut = m_firesPutOut;
+    summary.secondsLeft = static_cast<int>(std::ceil(m_rules.GetTimeLeft()));
+    const auto result = m_rules.GetOutcome() == StageOutcome::Won ? ResultScene::Outcome::Win
+                                                                  : ResultScene::Outcome::Lose;
+    App().GetScenes().SwitchTo(std::make_unique<ResultScene>(result, std::move(summary)));
+}
+
+void GameplayScene::RebuildMinimap() {
+    engine::Image minimap(m_map.GetWidth(), m_map.GetHeight());
+    for (int y = 0; y < m_map.GetHeight(); ++y) {
+        for (int x = 0; x < m_map.GetWidth(); ++x) {
+            Color color = Color::FromHex(0x708457);
+            switch (m_map.GetTile(x, y)) {
+            case TileType::Tree: color = Color::FromHex(0x36573B); break;
+            case TileType::Water: color = Color::FromHex(0x5AADB0); break;
+            case TileType::Dirt: color = Color::FromHex(0xC8AF7D); break;
+            case TileType::Sawit: color = Color::FromHex(0xC9A23A); break;
+            default: break;
+            }
+            minimap.SetPixel(x, y, color);
+        }
+    }
+    m_minimap = std::make_unique<engine::Texture>(minimap);
+    m_minimapRevision = m_map.GetRevision();
+}
+
+void GameplayScene::DrawFires(float alpha, float playerFeetY, bool foreground) {
+    // Same depth rule as the trees they burn on: roots below the player's feet = in front.
+    std::as_const(m_entities).ForEach<Fire>([&](const Fire& fire) {
+        if ((fire.GetBaseY() > playerFeetY) == foreground) {
+            fire.Draw(App().GetSpriteBatch(), alpha);
+        }
+    });
 }
 
 void GameplayScene::DrawCollisionDebug(float alpha) {
@@ -153,9 +230,16 @@ void GameplayScene::Draw(float alpha) {
     const auto visibleArea = m_camera.GetVisibleArea();
     const float playerFeetY = m_player.GetRenderFeetY(alpha);
     m_map.DrawGround(batch, *m_atlas, visibleArea, m_time);
-    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, visibleArea, playerFeetY, false);
+    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitTexture, visibleArea, playerFeetY, false);
+    DrawFires(alpha, playerFeetY, false);
     m_player.Draw(batch, *m_atlas, alpha, static_cast<float>(m_zoom));
-    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, visibleArea, playerFeetY, true);
+    m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitTexture, visibleArea, playerFeetY, true);
+    DrawFires(alpha, playerFeetY, true);
+
+    // The spray arcs over everything; smoke and steam rise above the canopy.
+    const engine::EntityWorld& entities = m_entities;
+    entities.ForEach<WaterDrop>([&](const WaterDrop& drop) { drop.Draw(batch, alpha); });
+    entities.ForEach<Particle>([&](const Particle& puff) { puff.Draw(batch, alpha); });
 
     const engine::Rect bounds = m_map.GetBounds();
     for (int i = 0; i < 48; ++i) {
@@ -223,6 +307,78 @@ void GameplayScene::DrawOverlay(float alpha) {
     rect(52, 51, 22, 2, moss);
     rect(77, 51, 114, 1, Color::FromHex(0xFFF0CB, 100));
 
+    // Water tank gauge and fire counter, under the location title.
+    {
+        const WaterTank& tank = m_player.GetTank();
+        const float hx = 14, hy = 60;
+        rect(hx, hy, 182, 44, Color::FromHex(0x152219, 195));
+        text("AIR", hx+6, hy+6, cream);
+        rect(hx+28, hy+5, 104, 9, edge);
+        rect(hx+30, hy+7, 100, 5, Color::FromHex(0x2A3A33));
+        const float fill = std::round(100.0f * tank.GetFraction());
+        const Color water = tank.GetFraction() < 0.2f ? Color::FromHex(0xE07A4F) : Color::FromHex(0x5FB8E0);
+        rect(hx+30, hy+7, fill, 5, water);
+        if (fill > 0) rect(hx+30, hy+7, fill, 1, Color::FromHex(0xD8F3FF, 160));
+        text(std::to_string(static_cast<int>(fill)), hx+138, hy+6, cream);
+
+        const bool empty = tank.GetAmount() < config::WaterPerDrop;
+        if (m_player.IsRefilling()) {
+            text("MENGISI ULANG", hx+6, hy+19, Color::FromHex(0x8FD8F0));
+        } else if (empty) {
+            if (std::fmod(m_time, 0.8f) < 0.55f) text("AIR HABIS - KE KOLAM", hx+6, hy+19, Color::FromHex(0xF08A5D));
+        } else {
+            text("KLIK KIRI: SEMPROT", hx+6, hy+19, shade);
+        }
+
+        const int fires = m_entities.Count<Fire>();
+        if (fires > 0) {
+            batch.Draw(*m_atlas, {std::round((hx+5)*s), std::round((hy+29)*s), 9*s, 9*s},
+                       GetSpriteSource(SpriteId::FireA));
+            text("API: " + std::to_string(fires), hx+17, hy+31, Color::FromHex(0xFFC14D));
+            text("PADAM: " + std::to_string(m_firesPutOut), hx+84, hy+31, shade);
+        } else {
+            text("SEMUA API PADAM", hx+6, hy+31, Color::FromHex(0xB6D98A));
+        }
+    }
+
+    // Stage clock and land status, top center.
+    {
+        const float tx = std::round(w * 0.5f) - 62, ty = 14;
+        rect(tx, ty, 124, 44, Color::FromHex(0x152219, 195));
+        const int seconds = static_cast<int>(std::ceil(m_rules.GetTimeLeft()));
+        const std::string clock = std::to_string(seconds / 60) + ":" +
+                                  (seconds % 60 < 10 ? "0" : "") + std::to_string(seconds % 60);
+        const bool hurry = seconds <= 30 && std::fmod(m_time, 1.0f) < 0.5f;
+        art::DrawPixelText(batch, clock,
+                           std::round((tx + 62 - (static_cast<float>(clock.size()) * 12 - 2) * 0.5f) * s),
+                           std::round((ty + 5) * s), 2 * s, hurry ? Color::FromHex(0xF08A5D) : cream);
+        const int forest = static_cast<int>(std::round(m_rules.GetForestFraction() * 100.0f));
+        const int sawit = static_cast<int>(std::round(m_rules.GetSawitFraction() * 100.0f));
+        const int limit = static_cast<int>(std::round(m_rules.GetSawitLoseFraction() * 100.0f));
+        text("HUTAN " + std::to_string(forest) + "%", tx + 6, ty + 23, Color::FromHex(0xB6D98A));
+        text(std::to_string(sawit) + "/" + std::to_string(limit) + "%", tx + 76, ty + 23, shade);
+        // Sawit share as a bar toward the losing limit.
+        text("SAWIT", tx + 6, ty + 33, Color::FromHex(0xE0B54A));
+        rect(tx + 40, ty + 33, 78, 7, edge);
+        rect(tx + 41, ty + 34, 76, 5, Color::FromHex(0x2A3A33));
+        const float fill = std::min(1.0f, m_rules.GetSawitFraction() / m_rules.GetSawitLoseFraction());
+        rect(tx + 41, ty + 34, std::round(76 * fill), 5,
+             fill > 0.66f ? Color::FromHex(0xE0503C) : Color::FromHex(0xC9A23A));
+    }
+
+    // Outcome banner during the short pause before the result screen.
+    if (m_rules.GetOutcome() != StageOutcome::Playing) {
+        const bool won = m_rules.GetOutcome() == StageOutcome::Won;
+        const std::string title = won ? "SEMUA API PADAM" :
+            m_rules.GetOutcome() == StageOutcome::LostSawit ? "HUTAN JADI SAWIT" : "WAKTU HABIS";
+        const float textWidth = static_cast<float>(title.size()) * 18 - 3;
+        rect(std::round((w - textWidth) * 0.5f) - 12, std::round(h * 0.5f) - 22, textWidth + 24, 40,
+             Color::FromHex(0x152219, 220));
+        art::DrawPixelText(batch, title, std::round((w - textWidth) * 0.5f * s),
+                           std::round((h * 0.5f - 12) * s), 3 * s,
+                           won ? Color::FromHex(0xB6D98A) : Color::FromHex(0xF5A26B));
+    }
+
     // Folded paper chart with tape tabs, compass and coordinate margin.
     const float mx = w-151, my = 17;
     rect(mx+4, my+5, 132, 131, Color::FromHex(0x152219, 130));
@@ -253,6 +409,12 @@ void GameplayScene::DrawOverlay(float alpha) {
         std::round(mapRect.y + top/world.h*mapRect.h),
         std::round((right-left)/world.w*mapRect.w),
         std::round((bottom-top)/world.h*mapRect.h)}, s, Color::FromHex(0xFFF0CB, 150));
+    const bool blink = std::fmod(m_time, 0.6f) < 0.4f;
+    std::as_const(m_entities).ForEach<Fire>([&](const Fire& fire) {
+        const float fx = mx+11+std::round(fire.GetPosition().x/world.w*108);
+        const float fy = my+40+std::round((fire.GetPosition().y-8)/world.h*72);
+        rect(fx-1, fy-1, 3, 3, blink ? Color::FromHex(0xFF5A2A) : Color::FromHex(0xFFC14D));
+    });
     const Vec2 player = m_player.GetRenderPosition(alpha);
     const float px = mx+11+std::round(player.x/world.w*108);
     const float py = my+40+std::round(player.y/world.h*72);
@@ -274,7 +436,7 @@ void GameplayScene::DrawOverlay(float alpha) {
 
     // Compact physical keycaps react to both WASD and the arrow keys.
     const float by = h-51;
-    rect(10, by-4, 240, 45, Color::FromHex(0x152219, 195));
+    rect(10, by-4, 322, 45, Color::FromHex(0x152219, 195));
     const auto& input = App().GetInput();
     auto keycap = [&](std::string_view key, float x, float y, float width, bool down) {
         rect(x, y+2, width, 12, edge);
@@ -292,7 +454,17 @@ void GameplayScene::DrawOverlay(float alpha) {
     rect(150, by+2, 1, 26, Color::FromHex(0xFFF0CB, 60));
     keycap("ESC", 162, by+3, 23, input.IsKeyDown(Key::Escape));
     text("MENU", 192, by+6, cream);
-    text("SCROLL: ZOOM", 162, by+21, shade);    batch.End();
+    text("SCROLL: ZOOM", 162, by+21, shade);
+    rect(240, by+2, 1, 26, Color::FromHex(0xFFF0CB, 60));
+    // Mouse with the left button lit while spraying.
+    const bool sprayDown = input.IsMouseDown(engine::MouseButton::Left);
+    rect(252, by+3, 11, 16, edge);
+    rect(253, by+4, 9, 14, paper);
+    rect(253, by+4, 4, 6, sprayDown ? Color::FromHex(0x5FB8E0) : shade);
+    rect(257, by+4, 1, 6, edge);
+    text("SEMPROT", 270, by+5, cream);
+    text("KLIK KIRI", 270, by+19, shade);
+    batch.End();
 }
 
 } // namespace game

@@ -10,6 +10,9 @@
     <Filter Include="include\engine\core">
       <UniqueIdentifier>{e20b372d-d53e-5dae-bb43-cb412eca274c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\engine\entity">
+      <UniqueIdentifier>{c4f1a8e2-5b3d-4e7a-9c61-2d8b7f4e0a15}</UniqueIdentifier>
+    </Filter>
     <Filter Include="include\engine\graphics">
       <UniqueIdentifier>{7c10202c-8b8c-5eb7-8dc7-110fb72f67d1}</UniqueIdentifier>
     </Filter>
@@ -27,6 +30,9 @@
     </Filter>
     <Filter Include="src\core">
       <UniqueIdentifier>{5d2c39c0-ed9f-597a-ba1d-0baaf09ac6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\entity">
+      <UniqueIdentifier>{e7b2c9d4-1a6f-4c38-8b05-6f3e2a9d7c41}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\graphics">
       <UniqueIdentifier>{404de7b5-6b84-5201-9b16-1f070d2871a7}</UniqueIdentifier>
@@ -50,6 +56,12 @@
     </ClInclude>
     <ClInclude Include="include\engine\core\SceneManager.h">
       <Filter>include\engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\entity\Entity.h">
+      <Filter>include\engine\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine\entity\EntityWorld.h">
+      <Filter>include\engine\entity</Filter>
     </ClInclude>
     <ClInclude Include="include\engine\graphics\Camera2D.h">
       <Filter>include\engine\graphics</Filter>
@@ -124,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="src\input\Input.cpp">
       <Filter>src\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entity\EntityWorld.cpp">
+      <Filter>src\entity</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\Collision.cpp">
       <Filter>src\physics</Filter>

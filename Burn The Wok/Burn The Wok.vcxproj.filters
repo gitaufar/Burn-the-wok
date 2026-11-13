@@ -13,6 +13,9 @@
     <Filter Include="src\scenes">
       <UniqueIdentifier>{1ade9395-5d3c-5139-bd81-864cc5dede64}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\systems">
+      <UniqueIdentifier>{a3d6e0f2-8c47-4b19-b5e2-7f0c1d9a6b38}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\world">
       <UniqueIdentifier>{8c89bbdd-2a85-5073-992e-796eb671e149}</UniqueIdentifier>
     </Filter>
@@ -29,6 +32,27 @@
     </ClInclude>
     <ClInclude Include="src\entities\Player.h">
       <Filter>src\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entities\Fire.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entities\Particle.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entities\WaterDrop.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\FireSystem.h">
+      <Filter>src\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\Sprayer.h">
+      <Filter>src\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\StageRules.h">
+      <Filter>src\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\systems\WaterTank.h">
+      <Filter>src\systems</Filter>
     </ClInclude>
     <ClInclude Include="src\scenes\GameplayScene.h">
       <Filter>src\scenes</Filter>
@@ -52,6 +76,21 @@
     </ClCompile>
     <ClCompile Include="src\entities\Player.cpp">
       <Filter>src\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entities\Fire.cpp">
+      <Filter>src\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entities\Particle.cpp">
+      <Filter>src\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entities\WaterDrop.cpp">
+      <Filter>src\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\FireSystem.cpp">
+      <Filter>src\systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\Sprayer.cpp">
+      <Filter>src\systems</Filter>
     </ClCompile>
     <ClCompile Include="src\scenes\GameplayScene.cpp">
       <Filter>src\scenes</Filter>

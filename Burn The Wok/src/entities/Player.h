@@ -1,8 +1,12 @@
 #pragma once
 
+#include "GameConfig.h"
+#include "systems/WaterTank.h"
+
+#include <engine/graphics/Texture.h>
 #include <engine/math/Rect.h>
 #include <engine/math/Vec2.h>
-#include <engine/graphics/Texture.h>
+
 #include <array>
 #include <memory>
 
@@ -18,8 +22,9 @@ class ForestMap;
 
 enum class Facing { Down, Up, Left, Right };
 
-// The forest ranger controlled by the player: walks in 4 directions and cannot pass
-// through solid map tiles (trees, water). The spray / water tank arrive later in Stage 2.
+// The forest ranger controlled by the player: walks in 4 directions, cannot pass
+// through solid map tiles (trees, water) and carries the water tank. Standing at the
+// edge of a pond refills the tank; the spraying itself is done by Sprayer.
 class Player {
 public:
     explicit Player(engine::Vec2 position) : m_position(position), m_previousPosition(position) {}
@@ -27,7 +32,19 @@ public:
     void LoadArtwork();
 
     // Moves with WASD/arrows; trees and water stop the player, who slides along them.
+    // Also refills the tank while the player stands next to water.
     void Update(const engine::Input& input, float dt, const ForestMap& map);
+
+    // Turns the ranger toward a (normalized) direction, e.g. where they are spraying.
+    // Overrides the facing from movement for this update.
+    void Aim(engine::Vec2 direction);
+    // World point where water leaves the sprayer for a given aim direction.
+    engine::Vec2 GetNozzlePosition(engine::Vec2 aim) const;
+
+    WaterTank& GetTank() { return m_tank; }
+    const WaterTank& GetTank() const { return m_tank; }
+    // True while the tank is being filled (standing at a water source, tank not full).
+    bool IsRefilling() const { return m_refilling; }
 
     // Collision box in world pixels. Only the feet collide (not the whole 16x16 sprite),
     // so the ranger's head can overlap a tree above them, which looks natural top-down.
@@ -61,6 +78,8 @@ private:
     Facing m_facing = Facing::Down;
     float m_walkTime = 0.0f;
     bool m_moving = false;
+    WaterTank m_tank{config::TankCapacity};
+    bool m_refilling = false;
 };
 
 } // namespace game

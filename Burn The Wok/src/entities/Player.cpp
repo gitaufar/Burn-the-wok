@@ -89,6 +89,17 @@ void Player::Update(const engine::Input& input, float dt, const ForestMap& map) 
             [&map](int x, int y) { return map.IsSolid(x, y); });
         m_position += moved.box.Position() - hitbox.Position();
     }
+    // "Touching" the pond = the hitbox grown by a few pixels overlaps a water tile.
+    engine::Rect reach = GetHitbox();
+    reach.x -= config::RefillReach;
+    reach.y -= config::RefillReach;
+    reach.w += config::RefillReach * 2.0f;
+    reach.h += config::RefillReach * 2.0f;
+    m_refilling = !m_tank.IsFull() && map.HasTileInArea(reach, TileType::Water);
+    if (m_refilling) {
+        m_tank.Refill(config::RefillPerSecond * dt);
+    }
+
     const float distance = (m_position - m_previousPosition).Length();
     m_moving = distance > 0.001f;
     // Distance-driven cadence stops at walls and slows naturally while sliding.
@@ -120,6 +131,21 @@ void Player::UpdateFacing(Vec2 direction) {
     } else {
         m_facing = direction.y < 0.0f ? Facing::Up : Facing::Down;
     }
+}
+
+void Player::Aim(Vec2 direction) {
+    if (direction == Vec2{}) return;
+    // Pick the dominant axis; UpdateFacing would keep the old facing on diagonals.
+    if (std::abs(direction.x) > std::abs(direction.y)) {
+        m_facing = direction.x < 0.0f ? Facing::Left : Facing::Right;
+    } else {
+        m_facing = direction.y < 0.0f ? Facing::Up : Facing::Down;
+    }
+}
+
+Vec2 Player::GetNozzlePosition(Vec2 aim) const {
+    // Roughly hand height, a few pixels out in the aim direction.
+    return m_position + Vec2{0.0f, -2.0f} + aim * 6.0f;
 }
 
 Vec2 Player::GetRenderPosition(float alpha) const {
