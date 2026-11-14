@@ -126,6 +126,7 @@ Burn The Wok/                         # root repo (git, branch main)
 │       ├── main.cpp                  # buat Application, jalankan MenuScene
 │       ├── GameConfig.h              # konstanta tuning (placeholder)
 │       ├── art/       PlaceholderArt # atlas sprite yang digambar lewat kode
+│       ├── audio/     SoundBank      # memuat SFX per nama (varian acak) dan memutarnya
 │       ├── entities/  Player, Fire, WaterDrop, Particle
 │       ├── systems/   WaterTank (logika air), Sprayer (semprotan), FireSystem (nyala, sebar, sawit, air vs api),
 │       │              StageRules (timer, menang/kalah)

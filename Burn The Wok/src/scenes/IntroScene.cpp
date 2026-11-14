@@ -205,6 +205,9 @@ void IntroScene::OnEnter() {
     } catch (const std::exception& e) {
         engine::LogError("Intro music unavailable: %s", e.what()); // the intro still works in silence
     }
+
+    m_sfx = std::make_unique<SoundBank>(App().GetAudio());
+    m_sfx->Load({"ui_click"});
 }
 
 void IntroScene::OnExit() {
@@ -280,6 +283,7 @@ void IntroScene::Update(float dt) {
         BeginEnding(SkipFadeDuration);
     } else if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) ||
                input.IsKeyPressed(Key::Space) || input.IsMousePressed(engine::MouseButton::Left)) {
+        if (m_sfx && (m_phase == Phase::Title || m_phase == Phase::Reading)) m_sfx->Play("ui_click", 0.35f);
         RequestAdvance();
     }
 

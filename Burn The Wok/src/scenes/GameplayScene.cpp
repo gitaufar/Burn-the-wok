@@ -10,11 +10,13 @@
 #include "scenes/ResultScene.h"
 
 #include <engine/core/Application.h>
+#include <engine/core/Log.h>
 #include <engine/graphics/Image.h>
 #include <engine/physics/Collision.h>
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <string>
 #include <utility>
 
@@ -59,10 +61,33 @@ void GameplayScene::OnEnter() {
     }
     m_vignette = std::make_unique<engine::Texture>(vignette);
 
+    m_sfx = std::make_unique<SoundBank>(App().GetAudio());
+    m_sfx->Load({"stage_start", "footstep", "footstep_grass", "water_spray", "water_refill", "tank_empty",
+                 "fire_loop", "fire_out", "fire_spread", "tree_to_palm", "timer_warning"});
+    try {
+        m_music = App().GetAudio().LoadSound("assets/audio/music/gameplay.wav");
+        m_musicVoice = App().GetAudio().Play(m_music, 0.0f, true); // faded in from UpdateSound()
+    } catch (const std::exception& e) {
+        engine::LogError("Gameplay music unavailable: %s", e.what()); // the game still works in silence
+    }
+    m_sfx->Play("stage_start", config::sound::StageStart);
+
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
                                " - Gameplay | WASD/panah: gerak, klik kiri: semprot, tepi kolam: isi air, "
                                "F1: menang, F2: kalah, F3: hitbox, F4: nyalakan api, Esc: menu");
     App().GetWindow().SetClearColor(Color::FromHex(0x1B3027));
+}
+
+void GameplayScene::OnExit() {
+    StopSounds();
+}
+
+void GameplayScene::StopSounds() {
+    engine::AudioSystem& audio = App().GetAudio();
+    for (engine::AudioSystem::VoiceId* voice : {&m_musicVoice, &m_sprayVoice, &m_fireVoice, &m_tickVoice}) {
+        audio.Stop(*voice);
+        *voice = engine::AudioSystem::InvalidVoice;
+    }
 }
 
 void GameplayScene::Update(float dt) {
@@ -114,8 +139,9 @@ void GameplayScene::Update(float dt) {
     }
 
     m_entities.Update(dt);
-    m_firesPutOut += m_fireSystem->ResolveWaterHits(m_entities);
-    m_fireSystem->Update(m_entities, m_map, dt);
+    const int putOut = m_fireSystem->ResolveWaterHits(m_entities);
+    m_firesPutOut += putOut;
+    const FireSystem::StepResult step = m_fireSystem->Update(m_entities, m_map, dt);
     if (m_map.GetRevision() != m_minimapRevision) {
         RebuildMinimap();
     }
@@ -123,11 +149,102 @@ void GameplayScene::Update(float dt) {
     // The outcome is shown in the world for a moment before the result screen.
     const StageOutcome outcome =
         m_rules.Update(dt, m_entities.Count<Fire>(), m_map.CountTiles(TileType::Sawit));
+    UpdateSound(dt, trigger, putOut, step, outcome);
     if (outcome != StageOutcome::Playing) {
         m_endTimer += dt;
         if (m_endTimer >= config::ResultDelay) {
             FinishStage();
         }
+    }
+}
+
+void GameplayScene::UpdateSound(float dt, bool trigger, int firesPutOut, const FireSystem::StepResult& step,
+                                StageOutcome outcome) {
+    namespace snd = config::sound;
+    engine::AudioSystem& audio = App().GetAudio();
+    const bool playing = outcome == StageOutcome::Playing;
+
+    // Music fades in at the start and ducks once the stage is decided.
+    const float musicTarget = playing ? 1.0f : 0.25f;
+    m_musicLevel += (musicTarget - m_musicLevel) * std::min(1.0f, dt * (playing ? 0.8f : 2.0f));
+    audio.SetVoiceVolume(m_musicVoice, snd::GameplayMusic * m_musicLevel);
+
+    // Water stream: a loop that runs exactly while water comes out of the nozzle.
+    const bool spraying = playing && m_sprayer.IsSpraying();
+    if (spraying && m_sprayVoice == engine::AudioSystem::InvalidVoice) {
+        m_sprayVoice = m_sfx->Loop("water_spray", snd::Spray);
+    } else if (!spraying && m_sprayVoice != engine::AudioSystem::InvalidVoice) {
+        audio.Stop(m_sprayVoice);
+        m_sprayVoice = engine::AudioSystem::InvalidVoice;
+    }
+
+    // Trigger held but nothing comes out: the tank is empty.
+    m_emptyTimer = std::max(0.0f, m_emptyTimer - dt);
+    if (playing && trigger && !m_sprayer.IsSpraying() &&
+        m_player.GetTank().GetAmount() < config::WaterPerDrop && m_emptyTimer <= 0.0f) {
+        m_sfx->Play("tank_empty", snd::TankEmpty);
+        m_emptyTimer = snd::TankEmptyInterval;
+    }
+
+    // Refilling at the pond: plays immediately, then repeats while the tank is filling.
+    if (playing && m_player.IsRefilling()) {
+        m_refillTimer -= dt;
+        if (m_refillTimer <= 0.0f) {
+            m_sfx->Play("water_refill", snd::Refill);
+            m_refillTimer = snd::RefillInterval;
+        }
+    } else {
+        m_refillTimer = 0.0f;
+    }
+
+    // Footsteps: harder on the dirt trail, soft on grass.
+    if (playing && m_player.IsMoving()) {
+        m_stepTimer -= dt;
+        if (m_stepTimer <= 0.0f) {
+            const engine::Rect feet = m_player.GetHitbox();
+            const float ts = static_cast<float>(config::TileSize);
+            const TileType ground = m_map.GetTile(static_cast<int>(std::floor((feet.x + feet.w * 0.5f) / ts)),
+                                                  static_cast<int>(std::floor((feet.y + feet.h * 0.5f) / ts)));
+            m_sfx->Play(ground == TileType::Dirt ? "footstep" : "footstep_grass", snd::Footstep);
+            m_stepTimer = snd::StepInterval;
+        }
+    } else {
+        m_stepTimer = 0.0f;
+    }
+
+    // Fire ambience: louder with more fires and when the nearest one is close.
+    const int fires = m_entities.Count<Fire>();
+    if (playing && fires > 0) {
+        float nearest = snd::FireHearingRange;
+        const Vec2 player = m_player.GetPosition();
+        std::as_const(m_entities).ForEach<Fire>([&](const Fire& fire) {
+            nearest = std::min(nearest, (fire.GetHitArea().center - player).Length());
+        });
+        const float closeness = 1.0f - nearest / snd::FireHearingRange;       // 0 far .. 1 right next to it
+        const float crowd = std::min(1.0f, static_cast<float>(fires) / 8.0f); // 0 .. 1 for 8+ fires
+        const float volume = snd::FireLoopMin + (snd::FireLoopMax - snd::FireLoopMin) * (0.7f * closeness + 0.3f * crowd);
+        if (m_fireVoice == engine::AudioSystem::InvalidVoice) {
+            m_fireVoice = m_sfx->Loop("fire_loop", volume);
+        } else {
+            audio.SetVoiceVolume(m_fireVoice, volume);
+        }
+    } else if (m_fireVoice != engine::AudioSystem::InvalidVoice) {
+        audio.Stop(m_fireVoice);
+        m_fireVoice = engine::AudioSystem::InvalidVoice;
+    }
+
+    // One-shot events of this update.
+    if (firesPutOut > 0) m_sfx->Play("fire_out", snd::FireOut);
+    if (step.spread > 0) m_sfx->Play("fire_spread", snd::FireSpread);
+    if (step.turnedToSawit > 0) m_sfx->Play("tree_to_palm", snd::TreeToPalm);
+
+    // Ticking in the last seconds.
+    const bool urgent = playing && m_rules.GetTimeLeft() <= snd::TimerWarningSeconds;
+    if (urgent && m_tickVoice == engine::AudioSystem::InvalidVoice) {
+        m_tickVoice = m_sfx->Loop("timer_warning", snd::TimerWarning);
+    } else if (!urgent && m_tickVoice != engine::AudioSystem::InvalidVoice) {
+        audio.Stop(m_tickVoice);
+        m_tickVoice = engine::AudioSystem::InvalidVoice;
     }
 }
 

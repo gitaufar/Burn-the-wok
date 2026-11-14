@@ -89,6 +89,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\GameConfig.h" />
+    <ClInclude Include="src\audio\SoundBank.h" />
     <ClInclude Include="src\art\PlaceholderArt.h" />
     <ClInclude Include="src\art\PixelText.h" />
     <ClInclude Include="src\entities\Fire.h" />
@@ -107,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\audio\SoundBank.cpp" />
     <ClCompile Include="src\art\PlaceholderArt.cpp" />
     <ClCompile Include="src\entities\Fire.cpp" />
     <ClCompile Include="src\entities\Particle.cpp" />

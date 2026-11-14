@@ -52,4 +52,29 @@ inline constexpr int DefaultZoom = 3;
 inline constexpr int MinZoom = 1;
 inline constexpr int MaxZoom = 6;
 
+// --- Sound levels (0..1) and timings. Tune by ear. ---
+namespace sound {
+inline constexpr float GameplayMusic = 0.45f;
+inline constexpr float MenuMusic = 0.7f;
+inline constexpr float StageStart = 0.8f;
+inline constexpr float Footstep = 0.35f;
+inline constexpr float StepInterval = 0.26f;    // seconds between two steps while walking
+inline constexpr float Spray = 0.5f;            // water_spray loop while water comes out
+inline constexpr float Refill = 0.6f;
+inline constexpr float RefillInterval = 0.7f;   // the refill sound is ~0.7 s long
+inline constexpr float TankEmpty = 0.6f;
+inline constexpr float TankEmptyInterval = 0.8f;
+inline constexpr float FireLoopMin = 0.06f;     // fire_loop: far away, one fire
+inline constexpr float FireLoopMax = 0.4f;      // fire_loop: close, many fires
+inline constexpr float FireHearingRange = 160.0f; // world pixels: fires further away are quiet
+inline constexpr float FireOut = 0.8f;
+inline constexpr float FireSpread = 0.7f;
+inline constexpr float TreeToPalm = 0.9f;
+inline constexpr float TimerWarning = 0.45f;
+inline constexpr float TimerWarningSeconds = 10.0f; // the ticking starts at this many seconds left
+inline constexpr float Result = 0.9f;
+inline constexpr float UiClick = 0.7f;
+inline constexpr float UiHover = 0.4f;
+} // namespace sound
+
 } // namespace game::config

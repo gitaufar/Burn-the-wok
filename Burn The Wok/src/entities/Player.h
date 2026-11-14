@@ -48,6 +48,8 @@ public:
     const WaterTank& GetTank() const { return m_tank; }
     // True while the tank is being filled (standing at a water source, tank not full).
     bool IsRefilling() const { return m_refilling; }
+    // True while the ranger actually moves (not while pushing against a wall).
+    bool IsMoving() const { return m_moving; }
 
     // Collision box in world pixels. Only the feet collide (not the whole 16x16 sprite),
     // so the ranger's head can overlap a tree above them, which looks natural top-down.

@@ -4,6 +4,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{83722ad1-14ad-51b9-9dfb-a9b4ecbf6444}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\audio">
+      <UniqueIdentifier>{8c3f5a1e-7d24-4b96-a0e8-3f1d62b9c571}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\art">
       <UniqueIdentifier>{061a2429-fbe2-5ae4-b23e-ed6f8b8be34c}</UniqueIdentifier>
     </Filter>
@@ -23,6 +26,9 @@
   <ItemGroup>
     <ClInclude Include="src\GameConfig.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\audio\SoundBank.h">
+      <Filter>src\audio</Filter>
     </ClInclude>
     <ClInclude Include="src\art\PlaceholderArt.h">
       <Filter>src\art</Filter>
@@ -73,6 +79,9 @@
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\audio\SoundBank.cpp">
+      <Filter>src\audio</Filter>
     </ClCompile>
     <ClCompile Include="src\art\PlaceholderArt.cpp">
       <Filter>src\art</Filter>

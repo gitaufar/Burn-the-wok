@@ -1,5 +1,7 @@
 #pragma once
 
+#include "audio/SoundBank.h"
+
 #include <engine/audio/Audio.h>
 #include <engine/core/Scene.h>
 #include <engine/graphics/Texture.h>
@@ -72,6 +74,7 @@ private:
     bool m_ending = false;
     bool m_failed = false;      // narration file could not be read -> go straight to the menu
 
+    std::unique_ptr<SoundBank> m_sfx;
     std::shared_ptr<const engine::Sound> m_music;
     engine::AudioSystem::VoiceId m_voice = engine::AudioSystem::InvalidVoice;
 };

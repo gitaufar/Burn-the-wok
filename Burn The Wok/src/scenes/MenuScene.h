@@ -1,5 +1,7 @@
 #pragma once
 
+#include "audio/SoundBank.h"
+
 #include <engine/audio/Audio.h>
 #include <engine/core/Scene.h>
 #include <engine/graphics/Texture.h>
@@ -23,6 +25,8 @@ private:
     std::unique_ptr<engine::Texture> m_glow;
     engine::Rect m_logoSource;
     float m_time = 0.0f;
+    std::unique_ptr<SoundBank> m_sfx;
+    bool m_hovered = false; // mouse over the start button (for the hover sound)
     std::shared_ptr<const engine::Sound> m_music;
     engine::AudioSystem::VoiceId m_voice = engine::AudioSystem::InvalidVoice;
 };
