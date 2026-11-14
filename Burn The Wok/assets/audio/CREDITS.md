@@ -55,6 +55,6 @@ File-file ini berasal dari unduhan/rekaman tim. Isi kolom sumber dan lisensi seb
 | `sfx/tree_to_palm.wav` | tree to palm (1 aja, ga perlu 2).mp3 | Dari tim. Sumber dan lisensi belum dicatat. |
 | `sfx/saboteur_plant_seed.wav` | saboteur plant seed (1 aja, ga perlu 2).mp3 | Dari tim. Sumber dan lisensi belum dicatat. |
 | `sfx/saboteur_ignite.wav` | saboteur ignite (1 aja, ga perlu 2).mp3 | Dari tim. Sumber dan lisensi belum dicatat. |
-| `music/gameplay.ogg` | ini musik untuk gameplay.mp3 | Dari tim; dipakai untuk semua stage. Dikonversi ke OGG. Sumber dan lisensi belum dicatat. |
+| `music/gameplay.wav` | dziiten-adventures-loop-music-226836.mp3 | Dari tim; musik gameplay (loop 27 dtk), file sumber sama dengan `music/menu.wav`. Menggantikan `music/gameplay.ogg` (file tim sebelumnya). Nama file berpola Pixabay, cek lisensinya. Dikonversi ke WAV, volume dinormalisasi. |
 | `music/sad_intro.wav` | sad intro.mp3 | Dari tim; lagu intro. Dikonversi ke WAV (OGG belum bisa diputar). Sumber dan lisensi belum dicatat. |
 | `music/menu.wav` | dziiten-adventures-loop-music-226836.mp3 | Dari tim; lagu menu (loop 27 dtk). Menggantikan `music/intro.ogg` (Tropical Loop, CC0). Nama file berpola Pixabay, cek lisensinya. Dikonversi ke WAV, volume dinormalisasi karena aslinya sangat pelan. |
