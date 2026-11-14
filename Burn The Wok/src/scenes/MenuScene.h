@@ -1,5 +1,6 @@
 #pragma once
 
+#include <engine/audio/Audio.h>
 #include <engine/core/Scene.h>
 #include <engine/graphics/Texture.h>
 #include <engine/math/Rect.h>
@@ -13,6 +14,7 @@ namespace game {
 class MenuScene : public engine::Scene {
 public:
     void OnEnter() override;
+    void OnExit() override;
     void Update(float dt) override;
     void Draw(float alpha) override;
 
@@ -21,6 +23,8 @@ private:
     std::unique_ptr<engine::Texture> m_glow;
     engine::Rect m_logoSource;
     float m_time = 0.0f;
+    std::shared_ptr<const engine::Sound> m_music;
+    engine::AudioSystem::VoiceId m_voice = engine::AudioSystem::InvalidVoice;
 };
 
 } // namespace game

@@ -128,7 +128,7 @@ Prioritas: **W** = wajib, **S** = sebaiknya ada, **O** = opsional. Kolom "Sumber
 | # | File | Jenis | Varian | Loop | Pri | Dipicu saat | Sumber/lisensi |
 |---|---|---|---|---|---|---|---|
 | 1 | `sfx/ui_click` | SFX | 2 | tidak | W | klik tombol | |
-| 2 | `music/intro` | Musik | 1 | ya | W | menu utama | |
+| 2 | `music/menu` | Musik | 1 | ya | W | menu utama (pengganti lagu CC0 sebelumnya) | |
 | 3 | `voice/hey_antek_aseng` | Suara | 1-2 | tidak | W | antek/Wowo muncul atau mulai sabotase | |
 | 4 | `sfx/win` | Jingle | 1 | tidak | W | layar menang | |
 | 5 | `sfx/lose` | Jingle | 1 | tidak | W | layar kalah | |
@@ -174,7 +174,7 @@ Prioritas: **W** = wajib, **S** = sebaiknya ada, **O** = opsional. Kolom "Sumber
 
 Folder: `Burn The Wok/assets/audio/{sfx,music,voice}/`. Sumber, pembuat, dan lisensi (semua CC0) per file: `assets/audio/CREDITS.md`. File yang berasal dari tim (bukan CC0 terverifikasi) ditandai terpisah di `CREDITS.md`; lengkapi sumbernya sebelum laporan final.
 
-**Sudah ada (dari sumber CC0):** #1 `ui_click_1-2`, #2 `music/intro`, #4 `win`, #5 `lose`, #6 `animal_saved_1-3`, #7 `tree_to_palm`, #8 `water_spray` (loop), #9 `footstep_1-4`, #10 `fire_out_1-2`, #11 `music/sabotage_tension`, #12 `fire_loop`, #13 `fire_spread_1-3`, #14 `music/gameplay`, #15 `water_refill`, #16 `tank_empty`, #17 `timer_warning` (loop), #18 `tree_burning_1-2`, #21 `saboteur_ignite`, #22 `saboteur_plant_seed`, #23 `boss_appear`, #24 `stage_start`, #25 `stage_clear_star`, #26 `ui_hover`, #27 `pause_in`/`pause_out`.
+**Sudah ada (dari sumber CC0):** #1 `ui_click_1-2`, #2 `music/menu` (dari tim), #4 `win`, #5 `lose`, #6 `animal_saved_1-3`, #7 `tree_to_palm`, #8 `water_spray` (loop), #9 `footstep_1-4`, #10 `fire_out_1-2`, #11 `music/sabotage_tension`, #12 `fire_loop`, #13 `fire_spread_1-3`, #14 `music/gameplay`, #15 `water_refill`, #16 `tank_empty`, #17 `timer_warning` (loop), #18 `tree_burning_1-2`, #21 `saboteur_ignite`, #22 `saboteur_plant_seed`, #23 `boss_appear`, #24 `stage_start`, #25 `stage_clear_star`, #26 `ui_hover`, #27 `pause_in`/`pause_out`.
 
 **Dari tim (13-14/11/2026):** `voice/hey_antek_aseng`, `footstep_grass_1-3` (dari satu langkah, 2 varian digeser nadanya), `animal_burned` (potongan suara api hutan), serta file buatan/pilihan tim yang menggantikan pilihan awal: `animal_panic_burung_hantu`, `animal_panic_orangutan`, `animal_panic_bekantan`, `boss_appear`, `stage_start`, `stage_clear_star` (satu suara untuk 1-3 bintang), `tree_to_palm`, `saboteur_plant_seed`, `saboteur_ignite`, dan `music/gameplay`. Lisensi file-file ini belum diverifikasi, lihat `assets/audio/CREDITS.md`.
 
