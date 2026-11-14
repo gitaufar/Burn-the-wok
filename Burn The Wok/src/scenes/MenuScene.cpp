@@ -5,11 +5,13 @@
 #include "scenes/GameplayScene.h"
 
 #include <engine/core/Application.h>
+#include <engine/core/Log.h>
 #include <engine/graphics/Camera2D.h>
 #include <engine/graphics/Image.h>
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -65,10 +67,23 @@ void MenuScene::OnEnter() {
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
                                " - Menu | Enter/Spasi atau klik MULAI, Esc: keluar");
     App().GetWindow().SetClearColor(Color::FromHex(0x071411));
+
+    // Menu music loops until the scene is left; it fades in so it follows the intro's fade-out smoothly.
+    try {
+        m_music = App().GetAudio().LoadSound("assets/audio/music/menu.wav");
+        m_voice = App().GetAudio().Play(m_music, 0.0f, true);
+    } catch (const std::exception& e) {
+        engine::LogError("Menu music unavailable: %s", e.what()); // the menu still works in silence
+    }
+}
+
+void MenuScene::OnExit() {
+    App().GetAudio().Stop(m_voice);
 }
 
 void MenuScene::Update(float dt) {
     m_time += dt;
+    App().GetAudio().SetVoiceVolume(m_voice, 0.7f * std::clamp(m_time / 1.5f, 0.0f, 1.0f));
     const engine::Input& input = App().GetInput();
     const bool clickStart = input.IsMousePressed(engine::MouseButton::Left) &&
                             StartButton(App().GetWindow().GetSize()).Contains(input.GetMousePosition());

@@ -7,7 +7,6 @@ Cara pengolahan: SFX diubah ke WAV mono 16-bit 44,1 kHz, keheningan di awal/akhi
 
 | File di repo | File sumber | Paket | Pembuat | Halaman sumber |
 |---|---|---|---|---|
-| `music/intro.ogg` | Tropical.wav | Tropical Loop | glitchart | [tropical-loop](https://opengameart.org/content/tropical-loop) |
 | `music/sabotage_tension.ogg` | GameMusic_ForestTheme_24.mp3 | Dark Forest Theme | josepharaoh99 (proyek Pixelsphere) | [dark-forest-theme](https://opengameart.org/content/dark-forest-theme) |
 | `sfx/animal_saved_1.wav` | newthingget_0.ogg | New thing get! | Terrin Tin 01 | [new-thing-get](https://opengameart.org/content/new-thing-get) |
 | `sfx/animal_saved_2.wav` | confirmation_002.ogg | Interface Sounds | Kenney (kenney.nl) | [interface-sounds](https://opengameart.org/content/interface-sounds) |
@@ -58,3 +57,4 @@ File-file ini berasal dari unduhan/rekaman tim. Isi kolom sumber dan lisensi seb
 | `sfx/saboteur_ignite.wav` | saboteur ignite (1 aja, ga perlu 2).mp3 | Dari tim. Sumber dan lisensi belum dicatat. |
 | `music/gameplay.ogg` | ini musik untuk gameplay.mp3 | Dari tim; dipakai untuk semua stage. Dikonversi ke OGG. Sumber dan lisensi belum dicatat. |
 | `music/sad_intro.wav` | sad intro.mp3 | Dari tim; lagu intro. Dikonversi ke WAV (OGG belum bisa diputar). Sumber dan lisensi belum dicatat. |
+| `music/menu.wav` | dziiten-adventures-loop-music-226836.mp3 | Dari tim; lagu menu (loop 27 dtk). Menggantikan `music/intro.ogg` (Tropical Loop, CC0). Nama file berpola Pixabay, cek lisensinya. Dikonversi ke WAV, volume dinormalisasi karena aslinya sangat pelan. |
