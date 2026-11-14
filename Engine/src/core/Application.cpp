@@ -26,9 +26,11 @@ Application::Application(const AppConfig& config) : m_config(config) {
         m_window = std::make_unique<Window>(m_config.title, m_config.width, m_config.height,
                                             m_config.vsync, m_config.resizable);
         m_spriteBatch = std::make_unique<SpriteBatch>();
+        m_audio = std::make_unique<AudioSystem>();
         m_scenes = std::make_unique<SceneManager>(*this);
     } catch (...) {
         // The destructor does not run when a constructor throws, so clean up here.
+        m_audio.reset();
         m_spriteBatch.reset();
         m_window.reset();
         SDL_Quit();
@@ -40,6 +42,7 @@ Application::~Application() {
     // Scenes own textures and the sprite batch owns GL buffers: both must be
     // released while the GL context (owned by the window) still exists.
     m_scenes.reset();
+    m_audio.reset(); // after the scenes: they may still hold sounds
     m_spriteBatch.reset();
     m_window.reset();
     SDL_Quit();

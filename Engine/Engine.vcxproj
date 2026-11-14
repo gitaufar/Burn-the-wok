@@ -72,6 +72,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\engine\audio\Audio.h" />
     <ClInclude Include="include\engine\core\Application.h" />
     <ClInclude Include="include\engine\core\Log.h" />
     <ClInclude Include="include\engine\core\Scene.h" />
@@ -94,6 +95,7 @@
     <ClInclude Include="src\graphics\GL.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio\Audio.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
     <ClCompile Include="src\core\SceneManager.cpp" />

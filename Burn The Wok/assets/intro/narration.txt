@@ -1,0 +1,30 @@
+# Narasi intro Burn The Wo.
+# Format: "[scene] gambar | label" membuka satu scene (label hanya catatan penyunting, tidak tampil di gim);
+# setiap baris di bawahnya = satu halaman teks.
+# Baris kosong dan baris berawalan # diabaikan. Teks dikonversi otomatis ke HURUF BESAR (font pixel gim).
+# Tanda baca yang didukung: . , ? ! : ; - ' " ( )   Huruf bertanda (mis. n dengan tilde) ditulis tanpa tanda.
+
+[scene] assets/intro/scene_1.png | INDONESIA DALAM KEPUNGAN API
+Tahun 2026, Indonesia kembali menghadapi ancaman kebakaran hutan dan lahan.
+Fenomena El Niño yang semakin kuat, kondisi kemarau yang lebih kering, serta aktivitas pembukaan lahan meningkatkan risiko kebakaran di berbagai wilayah.
+Hingga Juli 2026, Kementerian Kehutanan mencatat sekitar 202 ribu hektare lahan telah terbakar. Sementara itu, laporan investigasi independen yang diterbitkan pada November 2026 memperkirakan dampak kebakaran mencapai 2,88 juta hektare hingga Oktober.
+Di balik angka-angka tersebut, ada hutan yang hilang, ekosistem yang rusak, dan masyarakat yang harus menghadapi dampak kebakaran.
+
+[scene] assets/intro/scene_2.png | JANJI, SEREMONI, DAN ASAP YANG BELUM HILANG
+Pemerintah tentu tidak tinggal diam.
+Di bawah kepemimpinan Presiden Prabowo Subianto, berbagai langkah telah diumumkan. Ribuan personel dikerahkan, helikopter disiapkan, patroli diperkuat, dan operasi pemadaman digencarkan.
+Pernyataan tegas disampaikan. Instruksi diberikan. Rapat demi rapat digelar. Semua tampak bergerak dengan sigap.
+Namun, ada satu hal yang tampaknya belum ikut padam: kebakarannya sendiri.
+Di tengah berbagai klaim keberhasilan dan keseriusan penanganan, masyarakat masih harus berhadapan dengan ancaman asap dan hilangnya hutan.
+Perusahaan yang lahannya terbakar dijatuhi sanksi. Pemerintah menjanjikan penegakan hukum. Tetapi, apakah sanksi administratif cukup untuk menjamin kebakaran tidak terulang?
+Sebab, memadamkan api memang penting. Namun, mencegahnya agar tidak terus menyala seharusnya menjadi prioritas.
+Pada akhirnya, masyarakat tidak hanya membutuhkan konferensi pers yang meyakinkan. Mereka membutuhkan hutan yang benar-benar terlindungi.
+
+[scene] assets/intro/scene_3.png | SIAPA YANG AKAN BERTANGGUNG JAWAB?
+Ketika api mulai membesar, semua orang sibuk mencari cara untuk memadamkannya.
+Namun, ketika api telah padam, siapa yang memastikan semuanya tidak terulang?
+Hutan yang hilang tidak bisa kembali hanya dengan sebuah pernyataan. Udara yang tercemar tidak menjadi bersih hanya karena angka kebakaran menurun. Dan masyarakat yang terdampak tidak bisa begitu saja diminta untuk melupakan semuanya.
+Kita tidak bisa terus-menerus menunggu kebakaran berikutnya untuk kembali membicarakan masalah yang sama.
+Pemerintah perlu diawasi. Kebijakan perlu dipertanyakan. Kepentingan yang merusak lingkungan perlu dilawan.
+Karena hutan bukan milik segelintir orang yang memiliki kuasa atasnya. Hutan adalah bagian dari kehidupan kita semua.
+Jangan tunggu sampai semuanya menjadi abu untuk mulai peduli.

@@ -73,7 +73,7 @@ Kategori: **(a)** dikonfirmasi dosen (binding OpenGL & windowing) · **(b)** bel
 | GLEW | 2.1.0 | Loader fungsi OpenGL | **(a)** binding OpenGL | idem |
 | `opengl32.lib` | Windows SDK | Driver OpenGL | **(a)** | idem |
 
-**Tidak ada dependency kategori (c).** Dari SDL2 hanya dipakai: `SDL_Init`, window + konteks GL, event, keyboard/mouse state, timer, message box. **Tidak** memakai `SDL_Renderer`, `SDL_Surface` untuk menggambar, atau audio SDL (belum).
+**Tidak ada dependency kategori (c).** Dari SDL2 hanya dipakai: `SDL_Init`, window + konteks GL, event, keyboard/mouse state, timer, message box. **Tidak** memakai `SDL_Renderer`, `SDL_Surface` untuk menggambar, atau SDL_mixer. Audio memakai perangkat audio SDL2 core (`SDL_OpenAudioDevice`) dengan loader WAV dan mixer buatan sendiri (`engine/audio`, 14/11/2026).
 
 Lokasi: `External/SDL/`, `External/GLEW/` (detail & lisensi: `External/README.md`). Hanya kode Engine yang meng-include header SDL/GLEW; kode Game tidak bisa (include path-nya tidak diberikan ke proyek Game).
 
@@ -160,6 +160,7 @@ Aturan dependensi: `Game → Engine`. Dilarang `Engine → Game`. Ditegakkan ole
 | `math/*` | Vec2, Rect, Mat4 | Header-only |
 | `entity/Entity`, `EntityWorld` (T2) | Objek dinamis (api, tetes air, asap; nanti satwa & musuh) | `Entity` = posisi + posisi sebelumnya (interpolasi) + flag hidup + `Update`/`Draw` virtual. `EntityWorld` memiliki semua entity (`unique_ptr`): `Spawn<T>`, `Update` (simpan posisi lama → update → hapus yang mati → tambah spawn baru), `ForEach<T>`/`Count<T>` (filter tipe lewat `dynamic_cast`). Spawn selama `Update`/`ForEach` ditunda agar vector tidak berubah saat diiterasi. Sengaja bukan ECS |
 | `physics/Collision` (T2) | Tes overlap, query tile, gerak di grid tile | Engine tidak tahu arti tile; Game menjawab "apakah tile (x, y) padat?" lewat callback. Tepi yang hanya bersentuhan tidak dihitung overlap (sama dengan `Rect::Contains`). `MoveAndSlide`: sumbu X dulu lalu Y (meluncur di dinding), cek semua kolom/baris yang dilewati (anti tembus), kotak yang sudah di dalam tile padat tetap bisa keluar |
+| `audio/AudioSystem` | Pemutar suara | Perangkat audio SDL2 (44,1 kHz, stereo, 16-bit) memanggil callback yang menjumlahkan sampai 16 *voice*. `LoadSound` membaca WAV PCM (8/16-bit, mono/stereo, laju berapa pun) dan mengonversinya ke format mixer (resample linier). `Play(sound, volume, loop)` mengembalikan `VoiceId` (dengan generasi, jadi id lama yang sudah selesai tidak berbahaya); volume per voice bisa diubah untuk fade. Tanpa perangkat audio, semua pemanggilan menjadi no-op. Musik berformat OGG belum didukung (butuh decoder, lihat Log Keputusan) |
 
 ## Modul Game (Tahap 2)
 

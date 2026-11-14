@@ -57,3 +57,4 @@ File-file ini berasal dari unduhan/rekaman tim. Isi kolom sumber dan lisensi seb
 | `sfx/saboteur_plant_seed.wav` | saboteur plant seed (1 aja, ga perlu 2).mp3 | Dari tim. Sumber dan lisensi belum dicatat. |
 | `sfx/saboteur_ignite.wav` | saboteur ignite (1 aja, ga perlu 2).mp3 | Dari tim. Sumber dan lisensi belum dicatat. |
 | `music/gameplay.ogg` | ini musik untuk gameplay.mp3 | Dari tim; dipakai untuk semua stage. Dikonversi ke OGG. Sumber dan lisensi belum dicatat. |
+| `music/sad_intro.wav` | sad intro.mp3 | Dari tim; lagu intro. Dikonversi ke WAV (OGG belum bisa diputar). Sumber dan lisensi belum dicatat. |
