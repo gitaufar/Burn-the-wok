@@ -5,6 +5,29 @@
 
 namespace game::art {
 
+// Extra punctuation for longer texts (intro narration). 5x7 rows, bit 4 = leftmost column.
+inline const unsigned char* PunctuationRows(char ch) {
+    static constexpr unsigned char comma[7] = {0, 0, 0, 0, 12, 12, 8};
+    static constexpr unsigned char question[7] = {14, 17, 1, 2, 4, 0, 4};
+    static constexpr unsigned char exclaim[7] = {4, 4, 4, 4, 4, 0, 4};
+    static constexpr unsigned char semicolon[7] = {0, 12, 12, 0, 12, 4, 8};
+    static constexpr unsigned char apostrophe[7] = {4, 4, 8, 0, 0, 0, 0};
+    static constexpr unsigned char quote[7] = {10, 10, 0, 0, 0, 0, 0};
+    static constexpr unsigned char open[7] = {2, 4, 8, 8, 8, 4, 2};
+    static constexpr unsigned char close[7] = {8, 4, 2, 2, 2, 4, 8};
+    switch (ch) {
+    case ',': return comma;
+    case '?': return question;
+    case '!': return exclaim;
+    case ';': return semicolon;
+    case '\'': return apostrophe;
+    case '"': return quote;
+    case '(': return open;
+    case ')': return close;
+    default: return nullptr;
+    }
+}
+
 // Small built-in font for in-game labels; no external font asset is needed.
 inline void DrawPixelText(engine::SpriteBatch& batch, std::string_view text,
                           float x, float y, float scale, engine::Color color) {
@@ -28,7 +51,8 @@ inline void DrawPixelText(engine::SpriteBatch& batch, std::string_view text,
         {14,16,16,30,17,17,14}, {31,1,2,4,8,8,8},
         {14,17,17,14,17,17,14}, {14,17,17,15,1,1,14}
     };
-    for (char ch : text) {
+    for (char raw : text) {
+        const char ch = raw >= 'a' && raw <= 'z' ? static_cast<char>(raw - 'a' + 'A') : raw; // font is upper-case only
         const int index = ch >= 'A' && ch <= 'Z' ? ch - 'A' :
                           ch >= '0' && ch <= '9' ? ch - '0' + 26 : -1;
         if (index >= 0) {
@@ -56,6 +80,14 @@ inline void DrawPixelText(engine::SpriteBatch& batch, std::string_view text,
         } else if (ch == ':') {
             batch.DrawRect({x + scale, y + 2 * scale, scale, scale}, color);
             batch.DrawRect({x + scale, y + 5 * scale, scale, scale}, color);
+        } else if (const unsigned char* rows = PunctuationRows(ch)) {
+            for (int row = 0; row < 7; ++row) {
+                for (int col = 0; col < 5; ++col) {
+                    if (rows[row] & (1 << (4 - col))) {
+                        batch.DrawRect({x + col * scale, y + row * scale, scale, scale}, color);
+                    }
+                }
+            }
         }
         x += 6 * scale;
     }

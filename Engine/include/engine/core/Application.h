@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/audio/Audio.h"
 #include "engine/core/SceneManager.h"
 #include "engine/graphics/SpriteBatch.h"
 #include "engine/graphics/Window.h"
@@ -41,6 +42,7 @@ public:
     Window& GetWindow() { return *m_window; }
     SpriteBatch& GetSpriteBatch() { return *m_spriteBatch; }
     SceneManager& GetScenes() { return *m_scenes; }
+    AudioSystem& GetAudio() { return *m_audio; }
     const Input& GetInput() const { return m_input; }
     float GetFixedDeltaTime() const { return 1.0f / static_cast<float>(m_config.updatesPerSecond); }
 
@@ -52,6 +54,7 @@ private:
     // explicitly in reverse order (scenes -> sprite batch -> window -> SDL).
     std::unique_ptr<Window> m_window;
     std::unique_ptr<SpriteBatch> m_spriteBatch;
+    std::unique_ptr<AudioSystem> m_audio; // never throws: stays silent without an audio device
     std::unique_ptr<SceneManager> m_scenes;
     Input m_input;
     bool m_running = false;

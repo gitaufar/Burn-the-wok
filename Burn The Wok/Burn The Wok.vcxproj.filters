@@ -57,6 +57,9 @@
     <ClInclude Include="src\scenes\GameplayScene.h">
       <Filter>src\scenes</Filter>
     </ClInclude>
+    <ClInclude Include="src\scenes\IntroScene.h">
+      <Filter>src\scenes</Filter>
+    </ClInclude>
     <ClInclude Include="src\scenes\MenuScene.h">
       <Filter>src\scenes</Filter>
     </ClInclude>
@@ -93,6 +96,9 @@
       <Filter>src\systems</Filter>
     </ClCompile>
     <ClCompile Include="src\scenes\GameplayScene.cpp">
+      <Filter>src\scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scenes\IntroScene.cpp">
       <Filter>src\scenes</Filter>
     </ClCompile>
     <ClCompile Include="src\scenes\MenuScene.cpp">

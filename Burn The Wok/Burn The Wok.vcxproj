@@ -100,6 +100,7 @@
     <ClInclude Include="src\systems\StageRules.h" />
     <ClInclude Include="src\systems\WaterTank.h" />
     <ClInclude Include="src\scenes\GameplayScene.h" />
+    <ClInclude Include="src\scenes\IntroScene.h" />
     <ClInclude Include="src\scenes\MenuScene.h" />
     <ClInclude Include="src\scenes\ResultScene.h" />
     <ClInclude Include="src\world\ForestMap.h" />
@@ -114,6 +115,7 @@
     <ClCompile Include="src\systems\FireSystem.cpp" />
     <ClCompile Include="src\systems\Sprayer.cpp" />
     <ClCompile Include="src\scenes\GameplayScene.cpp" />
+    <ClCompile Include="src\scenes\IntroScene.cpp" />
     <ClCompile Include="src\scenes\MenuScene.cpp" />
     <ClCompile Include="src\scenes\ResultScene.cpp" />
     <ClCompile Include="src\world\ForestMap.cpp" />

@@ -185,3 +185,15 @@ Folder: `Burn The Wok/assets/audio/{sfx,music,voice}/`. Sumber, pembuat, dan lis
 - Satu lagu `music/gameplay` dipakai untuk semua stage.
 - `fire_spread_*` dan `ui_click_*` sangat pendek (0,03-0,1 dtk). Bila terasa kurang, cari yang lebih panjang.
 - Total ukuran audio ±14 MB.
+
+### Aset intro (14/11/2026, branch `feat/add-intro`)
+
+| File | Isi |
+|---|---|
+| `assets/intro/scene_1.png` | Indonesia dalam kepungan api (peta titik api, helikopter) |
+| `assets/intro/scene_2.png` | Konferensi pers dan pasukan pemadam (janji dan seremoni) |
+| `assets/intro/scene_3.png` | Warga bermasker dan satwa terdampak (siapa yang bertanggung jawab) |
+| `assets/intro/narration.txt` | Narasi: `[scene] gambar \| label`, lalu satu halaman teks per baris |
+| `assets/audio/music/sad_intro.wav` | Lagu intro (87,5 dtk, WAV stereo 24 kHz, dari tim, sumber belum dicatat) |
+
+Gambar diubah ke 1280x720 PNG. Urutan gambar mengikuti isi narasi (bukan urutan pengiriman). Tim perlu mencatat sumber/lisensi gambar dan lagu untuk laporan.
