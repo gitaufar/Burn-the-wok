@@ -197,3 +197,29 @@ Folder: `Burn The Wok/assets/audio/{sfx,music,voice}/`. Sumber, pembuat, dan lis
 | `assets/audio/music/sad_intro.wav` | Lagu intro (87,5 dtk, WAV stereo 24 kHz, dari tim, sumber belum dicatat) |
 
 Gambar diubah ke 1280x720 PNG. Urutan gambar mengikuti isi narasi (bukan urutan pengiriman). Tim perlu mencatat sumber/lisensi gambar dan lagu untuk laporan.
+
+### Pemasangan suara di gim (14/11/2026, branch `feat/add-game-sounds`)
+
+`SoundBank` (`src/audio`) memuat `assets/audio/sfx/<nama>.wav` atau varian `<nama>_1..N.wav`, lalu memutar varian acak (tidak pernah sama dua kali berturut-turut). Level suara diatur di `config::sound` (`GameConfig.h`).
+
+| Suara | Dipicu saat | Di scene |
+|---|---|---|
+| `music/menu` | menu terbuka (loop, fade in) | `MenuScene` |
+| `ui_hover`, `ui_click` | kursor masuk ke tombol MULAI; klik/Enter/Spasi | `MenuScene` |
+| `ui_click` | klik/Spasi/Enter untuk melanjutkan narasi (pelan) | `IntroScene` |
+| `music/sad_intro` | intro (sudah ada sebelumnya) | `IntroScene` |
+| `music/gameplay` | stage dimulai (loop, fade in; turun pelan saat hasil sudah ditentukan) | `GameplayScene` |
+| `stage_start` | stage dimulai | `GameplayScene` |
+| `footstep` / `footstep_grass` | berjalan di jalur tanah / rumput, tiap 0,26 dtk | `GameplayScene` |
+| `water_spray` (loop) | selama air benar-benar keluar dari nosel | `GameplayScene` |
+| `tank_empty` | klik kiri ditahan saat tangki kosong (berulang tiap 0,8 dtk) | `GameplayScene` |
+| `water_refill` | berdiri di tepi kolam saat tangki mengisi (berulang tiap 0,7 dtk) | `GameplayScene` |
+| `fire_loop` (loop) | selama ada api; makin keras kalau makin banyak dan makin dekat (jarak 160 px) | `GameplayScene` |
+| `fire_out` | api padam kena air | `GameplayScene` |
+| `fire_spread` | api menyalakan pohon baru | `GameplayScene` |
+| `tree_to_palm` | pohon berubah jadi sawit | `GameplayScene` |
+| `timer_warning` (loop) | 10 detik terakhir | `GameplayScene` |
+| `win` / `lose` | layar hasil terbuka | `ResultScene` |
+| `ui_click` | Enter/Spasi/Esc di layar hasil | `ResultScene` |
+
+**Belum dipasang** (mekaniknya belum ada di gim): `animal_*` (satwa), `saboteur_*`, `boss_appear`, `voice/hey_antek_aseng`, `stage_clear_star` (bintang), `pause_in`/`pause_out`, `music/sabotage_tension`, `tree_burning`. Angka level suara belum disetel dengan telinga; sesuaikan di `config::sound`.

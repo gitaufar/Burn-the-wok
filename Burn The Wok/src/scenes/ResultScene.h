@@ -1,6 +1,10 @@
 #pragma once
 
+#include "audio/SoundBank.h"
+
 #include <engine/core/Scene.h>
+
+#include <memory>
 
 #include <string>
 
@@ -33,6 +37,7 @@ public:
 private:
     Outcome m_outcome;
     Summary m_summary;
+    std::unique_ptr<SoundBank> m_sfx;
 };
 
 } // namespace game

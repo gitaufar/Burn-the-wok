@@ -75,6 +75,9 @@ void MenuScene::OnEnter() {
     } catch (const std::exception& e) {
         engine::LogError("Menu music unavailable: %s", e.what()); // the menu still works in silence
     }
+
+    m_sfx = std::make_unique<SoundBank>(App().GetAudio());
+    m_sfx->Load({"ui_click", "ui_hover"});
 }
 
 void MenuScene::OnExit() {
@@ -83,12 +86,17 @@ void MenuScene::OnExit() {
 
 void MenuScene::Update(float dt) {
     m_time += dt;
-    App().GetAudio().SetVoiceVolume(m_voice, 0.7f * std::clamp(m_time / 1.5f, 0.0f, 1.0f));
+    App().GetAudio().SetVoiceVolume(m_voice, config::sound::MenuMusic * std::clamp(m_time / 1.5f, 0.0f, 1.0f));
     const engine::Input& input = App().GetInput();
     const bool clickStart = input.IsMousePressed(engine::MouseButton::Left) &&
                             StartButton(App().GetWindow().GetSize()).Contains(input.GetMousePosition());
+    const bool overStart = StartButton(App().GetWindow().GetSize()).Contains(input.GetMousePosition());
+    if (overStart && !m_hovered) m_sfx->Play("ui_hover", config::sound::UiHover);
+    m_hovered = overStart;
+
     if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) ||
         input.IsKeyPressed(Key::Space) || clickStart) {
+        m_sfx->Play("ui_click", config::sound::UiClick);
         App().GetScenes().SwitchTo(std::make_unique<GameplayScene>());
     } else if (input.IsKeyPressed(Key::Escape)) {
         App().Quit();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audio/SoundBank.h"
 #include "entities/Player.h"
 #include "systems/FireSystem.h"
 #include "systems/Sprayer.h"
@@ -27,6 +28,7 @@ public:
     GameplayScene();
 
     void OnEnter() override;
+    void OnExit() override;
     void Update(float dt) override;
     void Draw(float alpha) override;
 
@@ -38,6 +40,10 @@ private:
     // Water bursting out of the spray gun's nozzle (the gun itself is part of the ranger sprite).
     void DrawWaterBurst(float alpha);
     void RebuildMinimap();
+    // Sound effects and music, driven by what happened this update.
+    void UpdateSound(float dt, bool trigger, int firesPutOut, const FireSystem::StepResult& step,
+                     StageOutcome outcome);
+    void StopSounds();
     void FinishStage(); // switch to the win/lose screen
 
     std::unique_ptr<engine::Texture> m_atlas; // created in OnEnter (needs the GL context)
@@ -68,6 +74,18 @@ private:
     int m_zoom;
     float m_time = 0.0f;
     bool m_showCollision = false; // F3
+
+    // Sound (levels in config::sound). Looping voices are started and stopped as the situation changes.
+    std::unique_ptr<SoundBank> m_sfx;
+    std::shared_ptr<const engine::Sound> m_music;
+    engine::AudioSystem::VoiceId m_musicVoice = engine::AudioSystem::InvalidVoice;
+    engine::AudioSystem::VoiceId m_sprayVoice = engine::AudioSystem::InvalidVoice;
+    engine::AudioSystem::VoiceId m_fireVoice = engine::AudioSystem::InvalidVoice;
+    engine::AudioSystem::VoiceId m_tickVoice = engine::AudioSystem::InvalidVoice;
+    float m_musicLevel = 0.0f; // 0..1 fade of the music
+    float m_stepTimer = 0.0f;
+    float m_refillTimer = 0.0f;
+    float m_emptyTimer = 0.0f;
 };
 
 } // namespace game

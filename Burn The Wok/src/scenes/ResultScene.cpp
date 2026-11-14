@@ -23,12 +23,17 @@ void ResultScene::OnEnter() {
     App().GetWindow().SetTitle(std::string(config::WindowTitle) + (win ? " - MENANG" : " - KALAH") +
                                " | Enter: kembali ke menu");
     App().GetWindow().SetClearColor(win ? Color::FromHex(0x265C42) : Color::FromHex(0x3E2731));
+
+    m_sfx = std::make_unique<SoundBank>(App().GetAudio());
+    m_sfx->Load({"win", "lose", "ui_click"});
+    m_sfx->Play(win ? "win" : "lose", config::sound::Result);
 }
 
 void ResultScene::Update(float /*dt*/) {
     const engine::Input& input = App().GetInput();
     if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) || input.IsKeyPressed(Key::Space) ||
         input.IsKeyPressed(Key::Escape)) {
+        m_sfx->Play("ui_click", config::sound::UiClick);
         App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
     }
 }
