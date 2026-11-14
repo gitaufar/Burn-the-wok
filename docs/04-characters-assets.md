@@ -182,7 +182,7 @@ Folder: `Burn The Wok/assets/audio/{sfx,music,voice}/`. Sumber, pembuat, dan lis
 
 **Catatan teknis:**
 - Musik berformat **OGG** (bukan WAV) agar ukuran wajar: 4 lagu total ±7,5 MB, sedangkan WAV stereo bisa 15 MB atau lebih per lagu. Pemutarnya butuh decoder OGG; ini dependency kategori (b), tanya dosen dulu (lihat `05-implementation-plan.md`, Log Keputusan).
-- Satu lagu `music/gameplay` dipakai untuk semua stage.
+- Satu lagu `music/gameplay` (sekarang `gameplay.wav`, 14/11/2026, file sumber sama dengan `music/menu.wav`) dipakai untuk semua stage. Belum diputar di gameplay; baru file aset.
 - `fire_spread_*` dan `ui_click_*` sangat pendek (0,03-0,1 dtk). Bila terasa kurang, cari yang lebih panjang.
 - Total ukuran audio ±14 MB.
 
