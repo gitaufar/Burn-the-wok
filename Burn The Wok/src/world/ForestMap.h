@@ -14,9 +14,9 @@ class Texture;
 namespace game {
 
 // Dirt = bare ground (the walking trail). Grass, flowers and dirt are walkable;
-// trees, water and oil palms (Sawit) are solid. A tree that burns too long becomes
-// Sawit and stays that way: it no longer counts as forest and cannot burn again.
-enum class TileType : std::uint8_t { Grass, GrassFlowers, Tree, Water, Dirt, Sawit };
+// trees, water and oil palms (Sawit) are solid. Charred land is walkable and
+// can be planted by the saboteur. Both Charred and Sawit count as lost forest.
+enum class TileType : std::uint8_t { Grass, GrassFlowers, Tree, Water, Dirt, Sawit, Charred };
 
 // Placeholder forest map: a fixed-seed random grid of grass, trees, a dirt trail and a pond.
 // Tiles can change during play (tree -> sawit), and trees remember how scorched they are.

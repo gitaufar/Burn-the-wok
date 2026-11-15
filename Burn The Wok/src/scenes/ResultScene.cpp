@@ -3,6 +3,7 @@
 #include "GameConfig.h"
 #include "art/PixelText.h"
 #include "scenes/MenuScene.h"
+#include "scenes/GameplayScene.h"
 
 #include <engine/core/Application.h>
 #include <engine/graphics/Camera2D.h>
@@ -18,10 +19,17 @@ namespace game {
 using engine::Color;
 using engine::Key;
 
+const char* ResultScene::ActionHint() const {
+    if (!m_summary.hasStats || (m_outcome == Outcome::Win && m_summary.stage == config::StageId::LastForest)) {
+        return "ENTER: KEMBALI KE MENU";
+    }
+    return m_outcome == Outcome::Win ? "ENTER: STAGE BERIKUTNYA" : "ENTER: ULANGI STAGE";
+}
+
 void ResultScene::OnEnter() {
     const bool win = m_outcome == Outcome::Win;
     App().GetWindow().SetTitle(std::string(config::WindowTitle) + (win ? " - MENANG" : " - KALAH") +
-                               " | Enter: kembali ke menu");
+                               " | " + ActionHint());
     App().GetWindow().SetClearColor(win ? Color::FromHex(0x265C42) : Color::FromHex(0x3E2731));
 
     m_sfx = std::make_unique<SoundBank>(App().GetAudio());
@@ -34,7 +42,14 @@ void ResultScene::Update(float /*dt*/) {
     if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) || input.IsKeyPressed(Key::Space) ||
         input.IsKeyPressed(Key::Escape)) {
         m_sfx->Play("ui_click", config::sound::UiClick);
-        App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+        if (input.IsKeyPressed(Key::Escape) || !m_summary.hasStats ||
+            (m_outcome == Outcome::Win && m_summary.stage == config::StageId::LastForest)) {
+            App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+        } else {
+            auto stage = m_summary.stage;
+            if (m_outcome == Outcome::Win) stage = static_cast<config::StageId>(static_cast<int>(stage) + 1);
+            App().GetScenes().SwitchTo(std::make_unique<GameplayScene>(stage));
+        }
     }
 }
 
@@ -75,7 +90,10 @@ void ResultScene::Draw(float /*alpha*/) {
     const Color cream = Color::FromHex(0xFFF0CB);
     const Color muted = Color::FromHex(0xD8C9A3);
     float y = c.y - 20.0f * s;
-    line(m_outcome == Outcome::Win ? "MENANG" : "KALAH", y, 4.0f * s, cream);
+    const bool completed = m_summary.hasStats && m_outcome == Outcome::Win &&
+                           m_summary.stage == config::StageId::LastForest;
+    line(completed ? "HUTAN SELAMAT" : m_outcome == Outcome::Win ? "MENANG" : "KALAH",
+         y, 4.0f * s, cream);
     y += 40.0f * s;
     if (!m_summary.reason.empty()) {
         line(m_summary.reason, y, 2.0f * s, m_outcome == Outcome::Win ? Color::FromHex(0xB6D98A)
@@ -87,9 +105,11 @@ void ResultScene::Draw(float /*alpha*/) {
         line("LAHAN SAWIT: " + std::to_string(m_summary.sawitPercent) + "%", y + 12.0f * s, s, muted);
         line("API DIPADAMKAN: " + std::to_string(m_summary.firesPutOut), y + 24.0f * s, s, muted);
         line("SISA WAKTU: " + std::to_string(m_summary.secondsLeft) + " DETIK", y + 36.0f * s, s, muted);
-        y += 54.0f * s;
+        line("SATWA SELAMAT: " + std::to_string(m_summary.rescued) + "/" +
+             std::to_string(m_summary.rescueTarget), y + 48.0f * s, s, muted);
+        y += 66.0f * s;
     }
-    line("ENTER: KEMBALI KE MENU", y, s, Color::FromHex(0xFFF0CB, 150));
+    line(ActionHint(), y, s, Color::FromHex(0xFFF0CB, 150));
 
     batch.End();
 }

@@ -39,7 +39,7 @@ int FireSystem::IgniteRandomTrees(engine::EntityWorld& world, const ForestMap& m
 
 bool FireSystem::Ignite(engine::EntityWorld& world, const ForestMap& map, int tileX, int tileY) {
     if (!map.IsBurnable(tileX, tileY) || IsBurning(world, tileX, tileY)) return false;
-    world.Spawn<Fire>(tileX, tileY, m_art);
+    world.Spawn<Fire>(tileX, tileY, m_art, m_spreadInterval);
     return true;
 }
 
@@ -64,10 +64,9 @@ FireSystem::StepResult FireSystem::Update(engine::EntityWorld& world, ForestMap&
         map.AddScorch(x, y, dt / config::BurnToSawitSeconds);
 
         if (fire.GetBurnTime() >= config::BurnToSawitSeconds) {
-            // The burnt tree is cleared and planted with oil palm.
-            map.SetTile(x, y, TileType::Sawit);
+            map.SetTile(x, y, m_leaveCharredGround ? TileType::Charred : TileType::Sawit);
             fire.Destroy();
-            ++result.turnedToSawit;
+            if (!m_leaveCharredGround) ++result.turnedToSawit;
             const Vec2 center = fire.GetHitArea().center;
             for (int i = 0; i < 8; ++i) {
                 world.Spawn<Particle>(center + Vec2{unit(m_rng) * 6.0f, unit(m_rng) * 3.0f},

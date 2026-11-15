@@ -176,6 +176,9 @@ void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& at
             case TileType::GrassFlowers:
                 batch.Draw(atlas, dest, GetSpriteSource(SpriteId::GrassFlowers), tint);
                 break;
+            case TileType::Charred:
+                batch.Draw(atlas, dest, GetSpriteSource(SpriteId::Dirt), engine::Color::FromHex(0x52463E));
+                break;
             case TileType::Dirt:
             case TileType::Sawit: // plantation soil under the palm
                 batch.Draw(atlas, dest, GetSpriteSource(SpriteId::Dirt), tint);

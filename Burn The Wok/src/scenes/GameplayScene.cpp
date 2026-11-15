@@ -1,6 +1,7 @@
 #include "scenes/GameplayScene.h"
 
 #include "GameConfig.h"
+#include "entities/StageActor.h"
 #include "art/PlaceholderArt.h"
 #include "art/PixelText.h"
 #include "entities/Fire.h"
@@ -26,11 +27,14 @@ using engine::Color;
 using engine::Key;
 using engine::Vec2;
 
-GameplayScene::GameplayScene()
-    : m_map(config::MapWidthTiles, config::MapHeightTiles, config::MapSeed),
+GameplayScene::GameplayScene(config::StageId stage)
+    : m_stage(stage), m_stageConfig(config::GetStage(stage)),
+      m_map(config::MapWidthTiles, config::MapHeightTiles, config::MapSeed),
       m_player(m_map.GetCenter()),
       m_sprayer(config::FireSeed + 1),
-      m_rules(config::StageDuration, config::SawitLoseFraction, m_map.CountTiles(TileType::Tree)),
+      m_rules(m_stageConfig.duration, m_stageConfig.sawitLimit, m_map.CountTiles(TileType::Tree),
+              m_stageConfig.rescueTarget),
+      m_pendingAnimals(m_stageConfig.animalCount),
       m_zoom(config::DefaultZoom) {}
 
 void GameplayScene::OnEnter() {
@@ -42,8 +46,10 @@ void GameplayScene::OnEnter() {
     m_waterSprayRight = LoadSprite("assets/items/water_spray_right.png");
     m_entities.Clear();
     m_fireSystem = std::make_unique<FireSystem>(
-        FireArt{m_atlas.get(), m_fireSprite.texture.get(), m_fireSprite.source}, config::FireSeed);
-    m_fireSystem->IgniteRandomTrees(m_entities, m_map, config::InitialFireCount);
+        FireArt{m_atlas.get(), m_fireSprite.texture.get(), m_fireSprite.source}, config::FireSeed,
+        m_stageConfig.spreadInterval, m_stage == config::StageId::Sabotage);
+    m_fireSystem->IgniteRandomTrees(m_entities, m_map, m_stageConfig.initialFires);
+    SpawnActors();
     const engine::Image tree = engine::Image::LoadFromFile("assets/environment/Tree.png");
     m_treeSource = tree.GetContentBounds(16);
     m_treeTexture = std::make_unique<engine::Texture>(tree);
@@ -73,9 +79,32 @@ void GameplayScene::OnEnter() {
     m_sfx->Play("stage_start", config::sound::StageStart);
 
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
-                               " - Gameplay | WASD/panah: gerak, klik kiri: semprot, tepi kolam: isi air, "
+                               " - " + m_stageConfig.name + " | WASD/panah: gerak, klik kiri: semprot, tepi kolam: isi air, "
                                "F1: menang, F2: kalah, F3: hitbox, F4: nyalakan api, Esc: menu");
     App().GetWindow().SetClearColor(Color::FromHex(0x1B3027));
+}
+
+void GameplayScene::SpawnActors() {
+    constexpr StageActor::Cell AnimalOffsets[] = {{-7, -3}, {5, 5}, {6, -5}, {-6, 5}};
+    const auto center = StageActor::ToCell(m_map.GetCenter());
+    const auto spawn = [&](config::ActorKind kind, StageActor::Cell offset) {
+        // Find a reachable tile near the intended start and outside the shelter.
+        const StageActor::Cell target{center.x + offset.x, center.y + offset.y};
+        const auto route = StageActor::FindRoute(m_map, center, [&](StageActor::Cell cell) {
+            const int distance = std::abs(cell.x - target.x) + std::abs(cell.y - target.y);
+            return distance <= 1;
+        });
+        const auto cell = route.empty() ? center : route.front();
+        m_entities.Spawn<StageActor>(kind, StageActor::CellCenter(cell)).LoadArtwork();
+    };
+    for (int i = 0; i < m_stageConfig.animalCount; ++i) {
+        spawn(m_stageConfig.animals[i], AnimalOffsets[i]);
+    }
+    if (m_stage == config::StageId::Sabotage) spawn(config::ActorKind::Saboteur, {6, -1});
+    if (m_stage == config::StageId::LastForest) {
+        spawn(config::ActorKind::Wowo, {-4, 3});
+        spawn(config::ActorKind::Tedduy, {4, -3});
+    }
 }
 
 void GameplayScene::OnExit() {
@@ -91,6 +120,12 @@ void GameplayScene::StopSounds() {
 }
 
 void GameplayScene::Update(float dt) {
+    if (m_rules.GetOutcome() != StageOutcome::Playing) {
+        m_endTimer += dt;
+        UpdateSound(dt, false, 0, {}, m_rules.GetOutcome());
+        if (m_endTimer >= config::ResultDelay) FinishStage();
+        return;
+    }
     m_time += dt;
     const engine::Input& input = App().GetInput();
 
@@ -98,7 +133,7 @@ void GameplayScene::Update(float dt) {
         App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
         return;
     }
-    // Debug shortcuts until real win/lose rules exist (Stage 3).
+    // Debug shortcuts for checking the result screens.
     if (input.IsKeyPressed(Key::F1)) {
         App().GetScenes().SwitchTo(std::make_unique<ResultScene>(ResultScene::Outcome::Win));
         return;
@@ -117,7 +152,13 @@ void GameplayScene::Update(float dt) {
         m_showCollision = !m_showCollision;
     }
 
-    m_player.Update(input, dt, m_map);
+    m_rangerBlocked = false;
+    std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) {
+        if (actor.BlocksRanger() && (actor.GetPosition() - m_player.GetPosition()).LengthSquared() < 18.0f * 18.0f) {
+            m_rangerBlocked = true;
+        }
+    });
+    m_player.Update(input, dt, m_map, m_rangerBlocked ? 0.55f : 1.0f);
 
     // Spray toward the mouse. The camera is from the last drawn frame, which is what
     // the player is looking at when they click.
@@ -131,7 +172,7 @@ void GameplayScene::Update(float dt) {
 
     m_sprayer.Update(dt, trigger, m_player.GetNozzlePosition(aim), aim, m_player.GetTank(), m_entities);
 
-    // Debug: light the tree under the cursor (fires do not spread until Stage 3).
+    // Debug: light the tree under the cursor.
     if (input.IsKeyPressed(Key::F4)) {
         const float ts = static_cast<float>(config::TileSize);
         m_fireSystem->Ignite(m_entities, m_map, static_cast<int>(std::floor(mouseWorld.x / ts)),
@@ -141,21 +182,25 @@ void GameplayScene::Update(float dt) {
     m_entities.Update(dt);
     const int putOut = m_fireSystem->ResolveWaterHits(m_entities);
     m_firesPutOut += putOut;
-    const FireSystem::StepResult step = m_fireSystem->Update(m_entities, m_map, dt);
+    FireSystem::StepResult step = m_fireSystem->Update(m_entities, m_map, dt);
+    m_rescued = 0;
+    m_pendingAnimals = 0;
+    m_entities.ForEach<StageActor>([&](StageActor& actor) {
+        actor.Step(dt, m_map, m_entities, *m_fireSystem, m_player.GetPosition(), m_player.GetHitbox());
+        if (actor.IsPlanting()) ++step.turnedToSawit;
+        if (!actor.IsAnimal()) return;
+        if (actor.GetRescue() == StageActor::Rescue::Saved) ++m_rescued;
+        else if (actor.GetRescue() != StageActor::Rescue::Burned) ++m_pendingAnimals;
+    });
     if (m_map.GetRevision() != m_minimapRevision) {
         RebuildMinimap();
     }
 
     // The outcome is shown in the world for a moment before the result screen.
     const StageOutcome outcome =
-        m_rules.Update(dt, m_entities.Count<Fire>(), m_map.CountTiles(TileType::Sawit));
+        m_rules.Update(dt, m_entities.Count<Fire>(), m_map.CountTiles(TileType::Sawit),
+                       m_map.CountTiles(TileType::Charred), m_rescued, m_pendingAnimals);
     UpdateSound(dt, trigger, putOut, step, outcome);
-    if (outcome != StageOutcome::Playing) {
-        m_endTimer += dt;
-        if (m_endTimer >= config::ResultDelay) {
-            FinishStage();
-        }
-    }
 }
 
 void GameplayScene::UpdateSound(float dt, bool trigger, int firesPutOut, const FireSystem::StepResult& step,
@@ -276,12 +321,16 @@ void GameplayScene::DrawWaterBurst(float alpha) {
 void GameplayScene::FinishStage() {
     ResultScene::Summary summary;
     switch (m_rules.GetOutcome()) {
-    case StageOutcome::Won: summary.reason = "SEMUA API PADAM"; break;
+    case StageOutcome::Won: summary.reason = "OBJEKTIF TERCAPAI"; break;
     case StageOutcome::LostSawit: summary.reason = "LAHAN SAWIT MELEWATI BATAS"; break;
-    case StageOutcome::LostTime: summary.reason = "WAKTU HABIS - API MASIH MENYALA"; break;
+    case StageOutcome::LostTime: summary.reason = "WAKTU HABIS"; break;
+    case StageOutcome::LostAnimals: summary.reason = "TARGET SATWA GAGAL"; break;
     case StageOutcome::Playing: break;
     }
     summary.hasStats = true;
+    summary.stage = m_stage;
+    summary.rescued = m_rescued;
+    summary.rescueTarget = m_stageConfig.rescueTarget;
     summary.forestPercent = static_cast<int>(std::round(m_rules.GetForestFraction() * 100.0f));
     summary.sawitPercent = static_cast<int>(std::round(m_rules.GetSawitFraction() * 100.0f));
     summary.firesPutOut = m_firesPutOut;
@@ -300,6 +349,7 @@ void GameplayScene::RebuildMinimap() {
             case TileType::Tree: color = Color::FromHex(0x36573B); break;
             case TileType::Water: color = Color::FromHex(0x5AADB0); break;
             case TileType::Dirt: color = Color::FromHex(0xC8AF7D); break;
+            case TileType::Charred: color = Color::FromHex(0x52463E); break;
             case TileType::Sawit: color = Color::FromHex(0xC9A23A); break;
             default: break;
             }
@@ -370,6 +420,7 @@ void GameplayScene::UpdateCamera(float alpha) {
 }
 
 void GameplayScene::Draw(float alpha) {
+    if (m_rules.GetOutcome() != StageOutcome::Playing) alpha = 1.0f;
     UpdateCamera(alpha);
 
     engine::SpriteBatch& batch = App().GetSpriteBatch();
@@ -381,6 +432,9 @@ void GameplayScene::Draw(float alpha) {
     m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
                     visibleArea, playerFeetY, false);
     DrawFires(alpha, playerFeetY, false);
+    std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) { actor.Draw(batch, alpha); });
+    const Vec2 shelter = StageActor::CellCenter(StageActor::ToCell(m_map.GetCenter()));
+    batch.DrawRectOutline({shelter.x - 7, shelter.y - 7, 14, 14}, 1, Color::FromHex(0xB6D98A, 200));
     m_player.Draw(batch, *m_atlas, alpha, static_cast<float>(m_zoom));
     DrawWaterBurst(alpha);
     m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
@@ -452,7 +506,7 @@ void GameplayScene::DrawOverlay(float alpha) {
     rect(20, 27, 17, 4, cream);
     rect(23, 31, 11, 3, cream);
     rect(51, 15, 110, 12, Color::FromHex(0x152219, 210));
-    text("KAWASAN KONSERVASI", 55, 18, shade);
+    text(m_stageConfig.name, 55, 18, shade);
     art::DrawPixelText(batch, "HUTAN TROPIS", 52*s, 33*s, 2*s, edge);
     art::DrawPixelText(batch, "HUTAN TROPIS", 51*s, 31*s, 2*s, cream);
     rect(52, 51, 22, 2, moss);
@@ -462,7 +516,7 @@ void GameplayScene::DrawOverlay(float alpha) {
     {
         const WaterTank& tank = m_player.GetTank();
         const float hx = 14, hy = 60;
-        rect(hx, hy, 182, 44, Color::FromHex(0x152219, 195));
+        rect(hx, hy, 182, 66, Color::FromHex(0x152219, 195));
         text("AIR", hx+6, hy+6, cream);
         rect(hx+28, hy+5, 104, 9, edge);
         rect(hx+30, hy+7, 100, 5, Color::FromHex(0x2A3A33));
@@ -491,6 +545,10 @@ void GameplayScene::DrawOverlay(float alpha) {
         } else {
             text("SEMUA API PADAM", hx+6, hy+31, Color::FromHex(0xB6D98A));
         }
+        text("SATWA SELAMAT: " + std::to_string(m_rescued) + "/" +
+             std::to_string(m_stageConfig.rescueTarget), hx+6, hy+44, Color::FromHex(0xB6D98A));
+        text(m_rangerBlocked ? "JALAN DIHADANG" : "DEKATI SATWA UNTUK MENOLONG",
+             hx+6, hy+55, shade);
     }
 
     // Stage clock and land status, top center.
@@ -521,8 +579,9 @@ void GameplayScene::DrawOverlay(float alpha) {
     // Outcome banner during the short pause before the result screen.
     if (m_rules.GetOutcome() != StageOutcome::Playing) {
         const bool won = m_rules.GetOutcome() == StageOutcome::Won;
-        const std::string title = won ? "SEMUA API PADAM" :
-            m_rules.GetOutcome() == StageOutcome::LostSawit ? "HUTAN JADI SAWIT" : "WAKTU HABIS";
+        const std::string title = won ? "OBJEKTIF TERCAPAI" :
+            m_rules.GetOutcome() == StageOutcome::LostSawit ? "HUTAN JADI SAWIT" :
+            m_rules.GetOutcome() == StageOutcome::LostAnimals ? "TARGET SATWA GAGAL" : "WAKTU HABIS";
         const float textWidth = static_cast<float>(title.size()) * 18 - 3;
         rect(std::round((w - textWidth) * 0.5f) - 12, std::round(h * 0.5f) - 22, textWidth + 24, 40,
              Color::FromHex(0x152219, 220));
@@ -566,6 +625,18 @@ void GameplayScene::DrawOverlay(float alpha) {
         const float fx = mx+11+std::round(fire.GetPosition().x/world.w*108);
         const float fy = my+40+std::round((fire.GetPosition().y-8)/world.h*72);
         rect(fx-1, fy-1, 3, 3, blink ? Color::FromHex(0xFF5A2A) : Color::FromHex(0xFFC14D));
+    });
+    const auto mark = [&](Vec2 position, Color color) {
+        const float x = mx+11+std::round(position.x/world.w*108);
+        const float y = my+40+std::round(position.y/world.h*72);
+        rect(x-1, y-1, 3, 3, color);
+    };
+    mark(StageActor::CellCenter(StageActor::ToCell(m_map.GetCenter())), Color::FromHex(0x79A949));
+    std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) {
+        if (actor.IsAnimal() && actor.GetRescue() != StageActor::Rescue::Saved &&
+            actor.GetRescue() != StageActor::Rescue::Burned) {
+            mark(actor.GetRenderPosition(alpha), Color::FromHex(0xF5EBCE));
+        }
     });
     const Vec2 player = m_player.GetRenderPosition(alpha);
     const float px = mx+11+std::round(player.x/world.w*108);

@@ -33,7 +33,7 @@ public:
 
     // Moves with WASD/arrows; trees and water stop the player, who slides along them.
     // Also refills the tank while the player stands next to water.
-    void Update(const engine::Input& input, float dt, const ForestMap& map);
+    void Update(const engine::Input& input, float dt, const ForestMap& map, float speedScale);
 
     // Turns the ranger toward a (normalized) direction and raises the spray gun: until
     // the next Update() the "holding the gun" sprites are drawn instead of the walking

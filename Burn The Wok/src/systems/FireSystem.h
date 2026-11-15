@@ -19,7 +19,8 @@ class ForestMap;
 class FireSystem {
 public:
     // art is handed to every Fire it creates; its textures must outlive them.
-    FireSystem(const FireArt& art, unsigned seed) : m_art(art), m_rng(seed) {}
+    FireSystem(const FireArt& art, unsigned seed, float spreadInterval, bool leaveCharredGround)
+        : m_art(art), m_rng(seed), m_spreadInterval(spreadInterval), m_leaveCharredGround(leaveCharredGround) {}
 
     // What happened during one Update().
     struct StepResult {
@@ -42,8 +43,8 @@ public:
     int ResolveWaterHits(engine::EntityWorld& world);
 
     // Call once per update, after the fires' own Update():
-    //  - burning trees get scorched; a tree burnt for BurnToSawitSeconds becomes Sawit
-    //    and its fire goes out (nothing left to burn);
+    //  - burning trees get scorched; a fully burned tree becomes charred land in
+    //    Sabotage and oil palm in the other stages, and its fire goes out;
     //  - a fire that is ready to spread lights a random burnable tree within
     //    SpreadRadiusTiles (if there is one).
     StepResult Update(engine::EntityWorld& world, ForestMap& map, float dt);
@@ -51,6 +52,8 @@ public:
 private:
     FireArt m_art;
     std::mt19937 m_rng;
+    float m_spreadInterval;
+    bool m_leaveCharredGround;
 };
 
 } // namespace game

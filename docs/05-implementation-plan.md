@@ -2,6 +2,8 @@
 
 Pengembangan dibagi **7 tahap**. Karena engine dibuat sendiri (syarat nilai 99), Tahap 1–2 memuat pekerjaan engine, bukan hanya gameplay. **Setiap akhir tahap harus menghasilkan build yang bisa dijalankan.**
 
+Pembagian tugas pengumpulan terbaru dan langkah kerja Iterasi 10 ada di [Rencana Iterasi 10–12](08-iteration-10-12-plan.md).
+
 ## Jadwal (dari RPS)
 
 | Sesi RPS | Tanggal |
@@ -95,6 +97,8 @@ Sprite gabungan 13/11/2026: penyemprot yang digambar terpisah diganti 32 frame p
 
 **DoD:** target satwa terpenuhi/gagal dan memengaruhi hasil.
 
+Status Iterasi 10: ketiga spesies memakai AI rescue bersama. HUD dan layar hasil menampilkan jumlah selamat, dan target satwa sudah masuk aturan stage. Uji logika lulus. Build Windows dan uji main manusia masih perlu dijalankan.
+
 ## Tahap 5 — Sabotase & 3 stage (20/11)
 
 - [ ] AI anak buah: menyebar api, menanam bibit sawit (stage 2)
@@ -103,6 +107,8 @@ Sprite gabungan 13/11/2026: penyemprot yang digambar terpisah diganti 32 frame p
 - [ ] Kurva kesulitan: api lebih cepat, hambatan lebih banyak, waktu lebih singkat
 
 **DoD:** tiga stage playable berurutan dengan kesulitan naik.
+
+Status Iterasi 10: kode konfigurasi, progression, retry, sabotase, dan boss dasar tersedia di branch implementasi. Parameter kesulitan untuk tiap stage tersedia dan menunggu playtest.
 
 ## Tahap 6 — UI, audio, polish (23/11)
 
@@ -152,9 +158,9 @@ Sprite gabungan 13/11/2026: penyemprot yang digambar terpisah diganti 32 frame p
 | 1 — Engine core | **Selesai** (06/11/2026) |
 | 2 — Collision & air/api | **Kode lengkap** (13/11/2026), menunggu uji main manual |
 | 3 — Penyebaran api & lahan | **Kode lengkap** (13/11/2026), menunggu uji main manual |
-| 4 — Satwa & AI | Belum mulai |
-| 5 — Sabotase & 3 stage | Belum mulai |
-| 6 — UI, audio, polish | Belum mulai |
+| 4 — Satwa & AI | Kode terpasang di branch Iterasi 10, menunggu playtest Windows |
+| 5 — Sabotase & 3 stage | Kode dasar terpasang di branch Iterasi 10, menunggu playtest Windows |
+| 6 — UI, audio, polish | Intro, HUD, SFX dasar tersedia. Pause, bintang, dan SFX mekanik baru masih terbuka |
 | 7 — Play testing & finalisasi | Belum mulai |
 
 ## Pertanyaan terbuka (06/11/2026)
