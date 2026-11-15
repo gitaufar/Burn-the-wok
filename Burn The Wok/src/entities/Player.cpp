@@ -78,7 +78,7 @@ void Player::LoadArtwork() {
     m_artScale = config::PlayerHeight / tallest;
 }
 
-void Player::Update(const engine::Input& input, float dt, const ForestMap& map) {
+void Player::Update(const engine::Input& input, float dt, const ForestMap& map, float speedScale) {
     m_previousPosition = m_position;
     m_aiming = false; // set again by Aim() if the trigger is still held
 
@@ -92,7 +92,7 @@ void Player::Update(const engine::Input& input, float dt, const ForestMap& map) 
     if (m_moving) {
         UpdateFacing(direction);
         // Normalize so diagonal movement is not ~41% faster than straight movement.
-        const Vec2 delta = direction.Normalized() * config::PlayerSpeed * dt;
+        const Vec2 delta = direction.Normalized() * config::PlayerSpeed * speedScale * dt;
         const engine::Rect hitbox = GetHitbox();
         const engine::MoveResult moved = engine::MoveAndSlide(
             hitbox, delta, static_cast<float>(config::TileSize),

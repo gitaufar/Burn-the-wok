@@ -1,7 +1,8 @@
 #pragma once
 
-// Tuning values for the game. Everything here is a PLACEHOLDER for the Stage 1 demo;
-// stage/balancing data moves to a data file in Stage 5 (see docs/03-gameplay-design.md).
+#include <array>
+
+// Shared defaults and the initial balancing values for the three playable stages.
 namespace game::config {
 
 inline constexpr const char* WindowTitle = "Burn The Wo";
@@ -35,6 +36,33 @@ inline constexpr float BurnToSawitSeconds = 30.0f;        // at full intensity; 
 inline constexpr float StageDuration = 150.0f;            // seconds
 inline constexpr float SawitLoseFraction = 0.15f;         // lose when this share of the forest is sawit
 inline constexpr float ResultDelay = 1.5f;                // pause before the win/lose screen
+
+enum class StageId { FirstFire, Sabotage, LastForest };
+enum class ActorKind { Orangutan, Bekantan, Owl, Saboteur, Wowo, Tedduy };
+
+struct StageConfig {
+    const char* name;
+    float duration;
+    int initialFires;
+    float spreadInterval;
+    float sawitLimit;
+    int rescueTarget;
+    std::array<ActorKind, 4> animals;
+    int animalCount;
+};
+
+inline constexpr StageConfig Stages[] = {
+    {"API PERTAMA", StageDuration, 3, 16.0f, SawitLoseFraction, 1,
+     {ActorKind::Orangutan, ActorKind::Orangutan}, 2},
+    {"SABOTASE", 135.0f, 5, SpreadInterval, 0.12f, 2,
+     {ActorKind::Orangutan, ActorKind::Bekantan, ActorKind::Bekantan}, 3},
+    {"HUTAN TERAKHIR", 115.0f, InitialFireCount, 9.0f, 0.10f, 3,
+     {ActorKind::Orangutan, ActorKind::Bekantan, ActorKind::Owl, ActorKind::Owl}, 4},
+};
+
+constexpr const StageConfig& GetStage(StageId id) {
+    return Stages[static_cast<int>(id)];
+}
 
 // --- Water sprayer & tank (Stage 2) ---
 inline constexpr float TankCapacity = 100.0f;      // water units

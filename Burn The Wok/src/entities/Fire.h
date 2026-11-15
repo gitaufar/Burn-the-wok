@@ -24,7 +24,7 @@ struct FireArt {
 // (long enough -> the tree becomes sawit) and when it may spread to another tree.
 class Fire : public engine::Entity {
 public:
-    Fire(int tileX, int tileY, const FireArt& art);
+    Fire(int tileX, int tileY, const FireArt& art, float spreadInterval);
 
     void Update(float dt) override;
     void Draw(engine::SpriteBatch& batch, float alpha) const override;
@@ -57,6 +57,7 @@ private:
     float m_intensity;
     float m_sinceWater = 999.0f; // seconds since the last water hit
     float m_burnTime = 0.0f;
+    float m_spreadInterval;
     float m_spreadTimer;         // seconds until the next spread (only counts while strong)
     float m_time;                // animation clock, offset per fire so they do not flicker in sync
 };

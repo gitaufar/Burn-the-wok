@@ -39,6 +39,9 @@
     <ClInclude Include="src\entities\Player.h">
       <Filter>src\entities</Filter>
     </ClInclude>
+    <ClInclude Include="src\entities\StageActor.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
     <ClInclude Include="src\entities\Fire.h">
       <Filter>src\entities</Filter>
     </ClInclude>
@@ -87,6 +90,9 @@
       <Filter>src\art</Filter>
     </ClCompile>
     <ClCompile Include="src\entities\Player.cpp">
+      <Filter>src\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entities\StageActor.cpp">
       <Filter>src\entities</Filter>
     </ClCompile>
     <ClCompile Include="src\entities\Fire.cpp">

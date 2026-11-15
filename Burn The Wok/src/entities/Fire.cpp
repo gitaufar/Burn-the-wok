@@ -13,14 +13,15 @@ namespace game {
 using engine::Color;
 using engine::Vec2;
 
-Fire::Fire(int tileX, int tileY, const FireArt& art)
+Fire::Fire(int tileX, int tileY, const FireArt& art, float spreadInterval)
     // Position = bottom-center of the tile, i.e. where the tree's roots are.
     : engine::Entity({(tileX + 0.5f) * config::TileSize, (tileY + 1.0f) * config::TileSize}),
       m_art(art),
       m_tileX(tileX),
       m_tileY(tileY),
       m_intensity(config::FireStartIntensity),
-      m_spreadTimer(config::SpreadInterval),
+      m_spreadInterval(spreadInterval),
+      m_spreadTimer(spreadInterval),
       m_time(static_cast<float>((tileX * 7 + tileY * 13) % 10) * 0.1f) {}
 
 void Fire::Update(float dt) {
@@ -37,7 +38,7 @@ void Fire::Update(float dt) {
 }
 
 void Fire::RestartSpreadTimer() {
-    m_spreadTimer = config::SpreadInterval;
+    m_spreadTimer = m_spreadInterval;
 }
 
 void Fire::ApplyWater(float amount) {
