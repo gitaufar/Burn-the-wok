@@ -6,6 +6,7 @@
 #include <SDL/SDL.h>
 
 #include <stdexcept>
+#include <cmath>
 
 namespace engine {
 
@@ -88,6 +89,12 @@ void Window::BeginFrame() {
 
 void Window::Present() {
     SDL_GL_SwapWindow(m_window);
+}
+
+void Window::SetViewport(const Rect& area) {
+    glViewport(static_cast<int>(std::round(area.x)),
+               m_height - static_cast<int>(std::round(area.Bottom())),
+               static_cast<int>(std::round(area.w)), static_cast<int>(std::round(area.h)));
 }
 
 } // namespace engine

@@ -32,6 +32,10 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!-- Building the project directly and building the solution use the same executable. -->
+    <OutDir>$(ProjectDir)..\$(Configuration)\</OutDir>
+  </PropertyGroup>
   <!-- Engine include path, SDL2/GLEW/OpenGL link settings, DLL copy step. -->
   <Import Project="..\Engine\Engine.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -92,6 +96,7 @@
     <ClInclude Include="src\audio\SoundBank.h" />
     <ClInclude Include="src\art\PlaceholderArt.h" />
     <ClInclude Include="src\art\PixelText.h" />
+    <ClInclude Include="src\art\SpriteDetail.h" />
     <ClInclude Include="src\entities\Fire.h" />
     <ClInclude Include="src\entities\Particle.h" />
     <ClInclude Include="src\entities\Player.h" />
@@ -147,6 +152,15 @@
     </ItemGroup>
     <Copy SourceFiles="@(GameAsset)"
           DestinationFiles="@(GameAsset->'$(OutDir)assets\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+  <!-- Refresh old project-local executables left by earlier direct project builds. -->
+  <Target Name="RefreshPreviousGameOutput" AfterTargets="CopyGameAssets"
+          Condition="Exists('$(ProjectDir)$(Configuration)\$(TargetFileName)')">
+    <Copy SourceFiles="$(TargetPath);@(EngineRuntimeDll)"
+          DestinationFolder="$(ProjectDir)$(Configuration)\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(GameAsset)"
+          DestinationFiles="@(GameAsset->'$(ProjectDir)$(Configuration)\assets\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true" />
   </Target>
   <ImportGroup Label="ExtensionTargets">

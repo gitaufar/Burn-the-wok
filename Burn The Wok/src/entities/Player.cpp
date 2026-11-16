@@ -2,6 +2,7 @@
 
 #include "GameConfig.h"
 #include "art/PlaceholderArt.h"
+#include "art/SpriteDetail.h"
 #include "world/ForestMap.h"
 
 #include <engine/graphics/SpriteBatch.h>
@@ -20,31 +21,6 @@ using engine::Key;
 using engine::Vec2;
 
 namespace {
-
-// Scale2x refines diagonal pixel-art edges using only existing palette colors.
-// This is prepared once on load; nearest filtering keeps the result crisp.
-engine::Image BuildDetailedSprite(const engine::Image& source) {
-    engine::Image result(source.GetWidth() * 2, source.GetHeight() * 2);
-    auto sample = [&](int x, int y) {
-        auto color = source.GetPixel(std::clamp(x, 0, source.GetWidth() - 1),
-                                     std::clamp(y, 0, source.GetHeight() - 1));
-        // Invisible RGB values should not affect silhouette comparisons.
-        return color.a == 0 ? engine::Color::Transparent() : color;
-    };
-    for (int y = 0; y < source.GetHeight(); ++y) {
-        for (int x = 0; x < source.GetWidth(); ++x) {
-            const auto b = sample(x, y - 1), d = sample(x - 1, y);
-            const auto e = sample(x, y), f = sample(x + 1, y);
-            const auto h = sample(x, y + 1);
-            const bool refine = b != h && d != f;
-            result.SetPixel(x * 2, y * 2, refine && d == b ? d : e);
-            result.SetPixel(x * 2 + 1, y * 2, refine && b == f ? f : e);
-            result.SetPixel(x * 2, y * 2 + 1, refine && d == h ? d : e);
-            result.SetPixel(x * 2 + 1, y * 2 + 1, refine && h == f ? f : e);
-        }
-    }
-    return result;
-}
 
 // The ranger frames (assets/characters/ranger, built by tools/assets/compose_ranger.py)
 // all share one layout, in image pixels: the head is centered on the canvas and the
@@ -72,7 +48,7 @@ void Player::LoadArtwork() {
         // works for all of them and the gun/tank never shift the body sideways.
         m_sources[i] = {0.0f, 0.0f, image.GetWidth() * 2.0f, image.GetHeight() * 2.0f};
         tallest = std::max(tallest, image.GetContentBounds(128).h * 2.0f);
-        m_frames[i] = std::make_unique<engine::Texture>(BuildDetailedSprite(image));
+        m_frames[i] = std::make_unique<engine::Texture>(art::BuildDetailedSprite(image));
     }
     // One shared scale keeps every pose consistent: the tallest pose is PlayerHeight.
     m_artScale = config::PlayerHeight / tallest;

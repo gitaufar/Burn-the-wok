@@ -148,8 +148,12 @@ Status Iterasi 10: kode konfigurasi, progression, retry, sabotase, dan boss dasa
 
 ## Status saat ini
 
+Pembaruan HUD gameplay (16/11/2026): arena hutan memakai viewport terpisah dari bar status atas dan panel instrumen bawah. Peta, indikator air, api, target satwa, dan petunjuk kontrol dipindahkan ke panel bawah; status kawasan/hutan/sawit/waktu ada di bar atas. Tidak ada panel HUD yang menutupi arena. Kamera dan culling mengikuti ukuran arena, koordinat mouse dikoreksi terhadap asal viewport, dan semprotan/F4 hanya aktif ketika kursor ada di arena. `Window::SetViewport` menyediakan viewport generik dengan koordinat kiri-atas untuk renderer engine sendiri. Uji render lokal 1280x720 dan 800x600 lolos; semprotan ke api di pojok kanan atas menurunkan intensitas dari 60 ke 23,6, klik pada kedua bar HUD tidak mengonsumsi air. Pratinjau: `Debug/patrol-corner.bmp` dan `Debug/patrol-small.bmp` (artefak lokal diabaikan Git).
+
+Pembaruan UI hasil patroli (16/11/2026): `ResultScene` memakai komposisi hutan/Ranger di kiri dan lembar laporan krem di kanan, selaras dengan menu dan HUD. Layar timeout menonjolkan judul WAKTU HABIS, bar hutan tersisa, persentase sawit, jumlah api padam, satwa terselamatkan, dan waktu dalam format menit:detik. Tombol utama mendukung klik/Enter/Spasi untuk ulangi atau lanjut; tombol menu mendukung klik/Esc. Hasil menang, akhir kampanye, penyebab kalah lain, serta hasil tanpa statistik memakai layout yang sama. Efek hover dengan audio, partikel ringan dan fade masuk singkat memakai renderer/aset game yang tersedia. Font dibulatkan ke piksel layar agar tetap terbaca saat resize. Pratinjau lokal diperiksa pada 1280x720 dan 800x600; build Debug/Release berhasil tanpa warning baru. Gambar lokal: `Debug/result-timeout.png` (diabaikan Git).
+
 - Tahap aktif: **2 & 3 kode lengkap** (13/11/2026), menunggu uji main manual; berikutnya **Tahap 4** (jadwal 16/11)
-- Terakhir diperbarui: 13/11/2026
+- Terakhir diperbarui: 16/11/2026
 - Kondisi repo (13/11/2026): solution `Engine` (static lib) + `Burn The Wok` (exe), C++20/MSVC v145/Win32, SDL2 + GLEW di `External/`. Remote GitHub `gitaufar/Burn-the-wok`, kerja lewat branch + PR. Aset PNG: pohon, logo, sprite pemain; sisanya placeholder lewat kode. Jalankan dengan `.\run` (lihat `06-architecture.md`).
 - Status per tahap:
 
@@ -163,6 +167,10 @@ Status Iterasi 10: kode konfigurasi, progression, retry, sabotase, dan boss dasa
 | 6 — UI, audio, polish | Intro, HUD, SFX dasar tersedia. Pause, bintang, dan SFX mekanik baru masih terbuka |
 | 7 — Play testing & finalisasi | Belum mulai |
 
+Pembaruan visual Wowo/Tedduy 16/11/2026: seluruh aktor manusia yang memakai aset Wowo/Tedduy, termasuk karakter sabotase stage 2, memakai tinggi 1,3 kali Ranger (`AntagonistHeight = 33,8`, `PlayerHeight = 26`). Ukuran diturunkan dari 1,6 kali sesuai umpan balik pengguna agar lebih kecil, tetap lebih tinggi daripada pemain. Koreksi ini memisahkan ukuran visual dari perilaku menghadang pemain; sebelumnya hanya dua bos stage 3 yang diperbesar. Seluruh 16 frame per karakter diproses Scale2x saat dimuat (80x80 menjadi 160x160), dengan filter nearest, satu batas potong untuk seluruh pose, dan penempatan pada piksel layar sesuai zoom. Pemrosesan sprite Ranger memakai helper bersama tanpa mengubah hasilnya. Output build langsung proyek disamakan dengan output solution; executable lama yang masih ada di folder proyek diperbarui bersama DLL/aset agar peluncuran dari lokasi lama juga mendapat perubahan.
+
+Verifikasi ukuran akhir: build Debug dan Release berhasil; hash executable Debug utama dan salinan lama identik. Harness lokal memakai aktor dari `GameplayScene::SpawnActors` stage 2 dan 3, lalu mengukur piksel yang benar-benar terlihat pada framebuffer: zoom 3, karakter sabotase/Wowo/Tedduy masing-masing **101 px** (sebelumnya 125 px), Ranger **78 px**. Seluruh 288 render (3 NPC x 4 arah x 4 frame x 6 zoom) menghasilkan NPC lebih tinggi dari Ranger, tanpa error OpenGL. Lembar perbandingan empat arah `Debug/character-comparison.png` diperiksa secara visual; harness dan gambar hanya artefak lokal yang diabaikan Git.
+
 ## Pertanyaan terbuka (06/11/2026)
 
 1. Decoder PNG: SOIL (seperti contoh dosen) atau stb_image? **Perlu konfirmasi singkat ke dosen** (kategori b). Sampai ada keputusan, tekstur dibuat lewat kode.
@@ -175,6 +183,7 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 
 | Tanggal | Keputusan | Alasan |
 |---|---|---|
+| 16/11/2026 | Semua aktor dengan aset Wowo/Tedduy, termasuk karakter sabotase stage 2, setinggi 1,3 kali Ranger; tekstur Scale2x dan satu jangkar untuk seluruh pose. Output build disatukan dan executable lama diperbarui | Ukuran 1,6 kali dinilai terlalu besar oleh pengguna; diperkecil dengan tetap mempertahankan tinggi di atas Ranger |
 | 06/11/2026 | Target nilai 99 → engine buatan sendiri | Plafon nilai (lihat 02) |
 | 06/11/2026 | Binding OpenGL & windowing dikonfirmasi tetap dihitung engine sendiri | Konfirmasi dosen |
 | 06/11/2026 | Karakter pemain = penjaga hutan (pemain sendiri), terpisah dari Wowo/Tedduy | Keputusan tim |

@@ -16,6 +16,9 @@ inline constexpr unsigned MapSeed = 2026; // same seed -> same placeholder map e
 
 inline constexpr float PlayerSpeed = 80.0f; // world pixels per second
 inline constexpr float PlayerHeight = 26.0f;
+// Every actor using Wowo/Tedduy artwork stands clearly above the ranger,
+// including the stage-2 saboteur that reuses the Wowo sprite set.
+inline constexpr float AntagonistHeight = PlayerHeight * 1.3f;
 // A compact top-down perspective: trees stand clearly above the ranger.
 inline constexpr float TreeHeight = PlayerHeight * 1.6f;
 inline constexpr float SawitHeight = TreeHeight * 0.9f; // oil palm, a bit lower than forest trees

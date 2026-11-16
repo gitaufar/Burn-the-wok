@@ -36,6 +36,9 @@
     <ClInclude Include="src\art\PixelText.h">
       <Filter>src\art</Filter>
     </ClInclude>
+    <ClInclude Include="src\art\SpriteDetail.h">
+      <Filter>src\art</Filter>
+    </ClInclude>
     <ClInclude Include="src\entities\Player.h">
       <Filter>src\entities</Filter>
     </ClInclude>
