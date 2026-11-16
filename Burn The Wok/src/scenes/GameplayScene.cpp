@@ -27,6 +27,21 @@ using engine::Color;
 using engine::Key;
 using engine::Vec2;
 
+namespace {
+// The forest has its own viewport. HUD panels never cover playable terrain.
+struct PatrolLayout {
+    float scale;
+    engine::Rect arena;
+    explicit PatrolLayout(Vec2 size) {
+        const float fit = std::min(size.x / 640.0f, size.y / 360.0f);
+        scale = fit >= 1 ? std::floor(fit) : std::max(0.01f, fit);
+        const float top = std::round(26 * scale);
+        const float bottom = std::round(64 * scale);
+        arena = {0, top, size.x, std::max(1.0f, size.y - top - bottom)};
+    }
+};
+}
+
 GameplayScene::GameplayScene(config::StageId stage)
     : m_stage(stage), m_stageConfig(config::GetStage(stage)),
       m_map(config::MapWidthTiles, config::MapHeightTiles, config::MapSeed),
@@ -162,9 +177,11 @@ void GameplayScene::Update(float dt) {
 
     // Spray toward the mouse. The camera is from the last drawn frame, which is what
     // the player is looking at when they click.
-    const Vec2 mouseWorld = m_camera.ScreenToWorld(input.GetMousePosition());
+    const PatrolLayout layout(App().GetWindow().GetSize());
+    const bool inArena = layout.arena.Contains(input.GetMousePosition());
+    const Vec2 mouseWorld = m_camera.ScreenToWorld(input.GetMousePosition() - layout.arena.Position());
     const Vec2 aim = (mouseWorld - m_player.GetPosition()).Normalized();
-    const bool trigger = input.IsMouseDown(engine::MouseButton::Left);
+    const bool trigger = inArena && input.IsMouseDown(engine::MouseButton::Left);
     if (trigger) {
         m_player.Aim(aim);
         if (aim != Vec2{}) m_aim = aim;
@@ -173,7 +190,7 @@ void GameplayScene::Update(float dt) {
     m_sprayer.Update(dt, trigger, m_player.GetNozzlePosition(aim), aim, m_player.GetTank(), m_entities);
 
     // Debug: light the tree under the cursor.
-    if (input.IsKeyPressed(Key::F4)) {
+    if (inArena && input.IsKeyPressed(Key::F4)) {
         const float ts = static_cast<float>(config::TileSize);
         m_fireSystem->Ignite(m_entities, m_map, static_cast<int>(std::floor(mouseWorld.x / ts)),
                              static_cast<int>(std::floor(mouseWorld.y / ts)));
@@ -394,7 +411,7 @@ void GameplayScene::DrawCollisionDebug(float alpha) {
 }
 
 void GameplayScene::UpdateCamera(float alpha) {
-    const Vec2 viewport = App().GetWindow().GetSize();
+    const Vec2 viewport = PatrolLayout(App().GetWindow().GetSize()).arena.Size();
     const float zoom = static_cast<float>(m_zoom);
     m_camera.SetViewportSize(viewport);
     m_camera.SetZoom(zoom);
@@ -424,6 +441,8 @@ void GameplayScene::Draw(float alpha) {
     UpdateCamera(alpha);
 
     engine::SpriteBatch& batch = App().GetSpriteBatch();
+    const PatrolLayout layout(App().GetWindow().GetSize());
+    App().GetWindow().SetViewport(layout.arena);
     batch.Begin(m_camera.GetViewProjection());
 
     const auto visibleArea = m_camera.GetVisibleArea();
@@ -432,7 +451,9 @@ void GameplayScene::Draw(float alpha) {
     m_map.DrawTrees(batch, *m_treeTexture, m_treeSource, *m_sawitSprite.texture, m_sawitSprite.source,
                     visibleArea, playerFeetY, false);
     DrawFires(alpha, playerFeetY, false);
-    std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) { actor.Draw(batch, alpha); });
+    std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) {
+        actor.Draw(batch, alpha, static_cast<float>(m_zoom));
+    });
     const Vec2 shelter = StageActor::CellCenter(StageActor::ToCell(m_map.GetCenter()));
     batch.DrawRectOutline({shelter.x - 7, shelter.y - 7, 14, 14}, 1, Color::FromHex(0xB6D98A, 200));
     m_player.Draw(batch, *m_atlas, alpha, static_cast<float>(m_zoom));
@@ -455,11 +476,11 @@ void GameplayScene::Draw(float alpha) {
     }
 
     // Highlight the tile under the mouse: shows the screen -> world conversion working.
-    const Vec2 mouseWorld = m_camera.ScreenToWorld(App().GetInput().GetMousePosition());
+    const Vec2 mouseWorld = m_camera.ScreenToWorld(App().GetInput().GetMousePosition() - layout.arena.Position());
     const float ts = static_cast<float>(config::TileSize);
     const engine::Rect hovered{std::floor(mouseWorld.x / ts) * ts, std::floor(mouseWorld.y / ts) * ts,
                                ts, ts};
-    if (m_map.GetBounds().Contains(mouseWorld)) {
+    if (layout.arena.Contains(App().GetInput().GetMousePosition()) && m_map.GetBounds().Contains(mouseWorld)) {
         const Color marker = Color::FromHex(0xF2DEA0, 130);
         batch.DrawRect({hovered.x, hovered.y, 4, 1}, marker);
         batch.DrawRect({hovered.x, hovered.y, 1, 4}, marker);
@@ -478,215 +499,115 @@ void GameplayScene::Draw(float alpha) {
 void GameplayScene::DrawOverlay(float alpha) {
     auto& batch = App().GetSpriteBatch();
     const Vec2 size = App().GetWindow().GetSize();
-    const float fit = std::min(size.x / 640.0f, size.y / 360.0f);
-    const float s = fit >= 1 ? std::floor(fit) : std::max(0.25f, fit);
-    const float w = size.x / s, h = size.y / s;
+    const PatrolLayout layout(size);
+    const float s = layout.scale, w = size.x / s, h = size.y / s;
+    App().GetWindow().SetViewport({0, 0, size.x, size.y});
     engine::Camera2D camera;
     camera.SetViewportSize(size);
     camera.SetPosition(size * 0.5f);
     batch.Begin(camera.GetViewProjection());
-    batch.Draw(*m_vignette, {0, 0, size.x, size.y});
-    const Color edge = Color::FromHex(0x29271F);
-    const Color paper = Color::FromHex(0xE8D9AF);
-    const Color shade = Color::FromHex(0xC7B58A), ink = Color::FromHex(0x3B4031);
-    const Color cream = Color::FromHex(0xFFF0CB), moss = Color::FromHex(0x738650);
+    const Color ink = Color::FromHex(0x152A23), paper = Color::FromHex(0xE8D9AF);
+    const Color cream = Color::FromHex(0xFFF0CB), muted = Color::FromHex(0xA9B69B);
+    const Color moss = Color::FromHex(0x8FA66E), rule = Color::FromHex(0x415244);
     auto rect = [&](float x, float y, float width, float height, Color color) {
         batch.DrawRect({std::round(x*s), std::round(y*s), std::round(width*s), std::round(height*s)}, color);
     };
     auto text = [&](std::string_view value, float x, float y, Color color) {
-        art::DrawPixelText(batch, value, std::round(x*s), std::round(y*s), s, color);
+        art::DrawPixelText(batch, value, std::round(x*s), std::round(y*s), std::max(1.0f, s), color);
     };
-    // Painted trail badge and open location typography.
-    rect(14, 14, 29, 37, edge);
-    rect(16, 14, 25, 33, moss);
-    rect(20, 47, 17, 3, moss);
-    rect(27, 25, 3, 16, cream);
-    rect(25, 20, 7, 3, cream);
-    rect(22, 23, 13, 4, cream);
-    rect(20, 27, 17, 4, cream);
-    rect(23, 31, 11, 3, cream);
-    rect(51, 15, 110, 12, Color::FromHex(0x152219, 210));
-    text(m_stageConfig.name, 55, 18, shade);
-    art::DrawPixelText(batch, "HUTAN TROPIS", 52*s, 33*s, 2*s, edge);
-    art::DrawPixelText(batch, "HUTAN TROPIS", 51*s, 31*s, 2*s, cream);
-    rect(52, 51, 22, 2, moss);
-    rect(77, 51, 114, 1, Color::FromHex(0xFFF0CB, 100));
+    // A thin location strip above the arena. No floating panels over the forest.
+    rect(0, 0, w, 26, ink);
+    rect(0, 25, w, 1, rule);
+    rect(10, 7, 11, 11, moss);
+    rect(14, 9, 3, 7, cream); rect(12, 11, 7, 2, cream);
+    text("POS PENJAGA", 28, 9, cream);
+    rect(103, 7, 1, 12, rule);
+    text(m_stageConfig.name, 114, 9, muted);
+    const int seconds = static_cast<int>(std::ceil(m_rules.GetTimeLeft()));
+    const std::string clock = std::to_string(seconds / 60) + ":" +
+        (seconds % 60 < 10 ? "0" : "") + std::to_string(seconds % 60);
+    const int forest = static_cast<int>(std::round(m_rules.GetForestFraction() * 100));
+    const int sawit = static_cast<int>(std::round(m_rules.GetSawitFraction() * 100));
+    const int limit = static_cast<int>(std::round(m_rules.GetSawitLoseFraction() * 100));
+    text("HUTAN " + std::to_string(forest) + "%", w - 300, 9, moss);
+    text("SAWIT " + std::to_string(sawit) + "/" + std::to_string(limit) + "%", w - 207, 9, muted);
+    rect(w - 103, 5, 1, 15, rule);
+    text("WAKTU", w - 91, 9, muted);
+    text(clock, w - 48, 9, seconds <= 30 ? Color::FromHex(0xF29B70) : cream);
 
-    // Water tank gauge and fire counter, under the location title.
-    {
-        const WaterTank& tank = m_player.GetTank();
-        const float hx = 14, hy = 60;
-        rect(hx, hy, 182, 66, Color::FromHex(0x152219, 195));
-        text("AIR", hx+6, hy+6, cream);
-        rect(hx+28, hy+5, 104, 9, edge);
-        rect(hx+30, hy+7, 100, 5, Color::FromHex(0x2A3A33));
-        const float fill = std::round(100.0f * tank.GetFraction());
-        const Color water = tank.GetFraction() < 0.2f ? Color::FromHex(0xE07A4F) : Color::FromHex(0x5FB8E0);
-        rect(hx+30, hy+7, fill, 5, water);
-        if (fill > 0) rect(hx+30, hy+7, fill, 1, Color::FromHex(0xD8F3FF, 160));
-        text(std::to_string(static_cast<int>(fill)), hx+138, hy+6, cream);
-
-        const bool empty = tank.GetAmount() < config::WaterPerDrop;
-        if (m_player.IsRefilling()) {
-            text("MENGISI ULANG", hx+6, hy+19, Color::FromHex(0x8FD8F0));
-        } else if (empty) {
-            if (std::fmod(m_time, 0.8f) < 0.55f) text("AIR HABIS - KE KOLAM", hx+6, hy+19, Color::FromHex(0xF08A5D));
-        } else {
-            text("KLIK KIRI: SEMPROT", hx+6, hy+19, shade);
-        }
-
-        const int fires = m_entities.Count<Fire>();
-        if (fires > 0) {
-            const float iconW = std::round(10.0f * m_fireSprite.source.w / m_fireSprite.source.h);
-            batch.Draw(*m_fireSprite.texture, {std::round((hx+6)*s), std::round((hy+28)*s), iconW*s, 10*s},
-                       m_fireSprite.source);
-            text("API: " + std::to_string(fires), hx+17, hy+31, Color::FromHex(0xFFC14D));
-            text("PADAM: " + std::to_string(m_firesPutOut), hx+84, hy+31, shade);
-        } else {
-            text("SEMUA API PADAM", hx+6, hy+31, Color::FromHex(0xB6D98A));
-        }
-        text("SATWA SELAMAT: " + std::to_string(m_rescued) + "/" +
-             std::to_string(m_stageConfig.rescueTarget), hx+6, hy+44, Color::FromHex(0xB6D98A));
-        text(m_rangerBlocked ? "JALAN DIHADANG" : "DEKATI SATWA UNTUK MENOLONG",
-             hx+6, hy+55, shade);
-    }
-
-    // Stage clock and land status, top center.
-    {
-        const float tx = std::round(w * 0.5f) - 62, ty = 14;
-        rect(tx, ty, 124, 44, Color::FromHex(0x152219, 195));
-        const int seconds = static_cast<int>(std::ceil(m_rules.GetTimeLeft()));
-        const std::string clock = std::to_string(seconds / 60) + ":" +
-                                  (seconds % 60 < 10 ? "0" : "") + std::to_string(seconds % 60);
-        const bool hurry = seconds <= 30 && std::fmod(m_time, 1.0f) < 0.5f;
-        art::DrawPixelText(batch, clock,
-                           std::round((tx + 62 - (static_cast<float>(clock.size()) * 12 - 2) * 0.5f) * s),
-                           std::round((ty + 5) * s), 2 * s, hurry ? Color::FromHex(0xF08A5D) : cream);
-        const int forest = static_cast<int>(std::round(m_rules.GetForestFraction() * 100.0f));
-        const int sawit = static_cast<int>(std::round(m_rules.GetSawitFraction() * 100.0f));
-        const int limit = static_cast<int>(std::round(m_rules.GetSawitLoseFraction() * 100.0f));
-        text("HUTAN " + std::to_string(forest) + "%", tx + 6, ty + 23, Color::FromHex(0xB6D98A));
-        text(std::to_string(sawit) + "/" + std::to_string(limit) + "%", tx + 76, ty + 23, shade);
-        // Sawit share as a bar toward the losing limit.
-        text("SAWIT", tx + 6, ty + 33, Color::FromHex(0xE0B54A));
-        rect(tx + 40, ty + 33, 78, 7, edge);
-        rect(tx + 41, ty + 34, 76, 5, Color::FromHex(0x2A3A33));
-        const float fill = std::min(1.0f, m_rules.GetSawitFraction() / m_rules.GetSawitLoseFraction());
-        rect(tx + 41, ty + 34, std::round(76 * fill), 5,
-             fill > 0.66f ? Color::FromHex(0xE0503C) : Color::FromHex(0xC9A23A));
-    }
-
-    // Outcome banner during the short pause before the result screen.
-    if (m_rules.GetOutcome() != StageOutcome::Playing) {
-        const bool won = m_rules.GetOutcome() == StageOutcome::Won;
-        const std::string title = won ? "OBJEKTIF TERCAPAI" :
-            m_rules.GetOutcome() == StageOutcome::LostSawit ? "HUTAN JADI SAWIT" :
-            m_rules.GetOutcome() == StageOutcome::LostAnimals ? "TARGET SATWA GAGAL" : "WAKTU HABIS";
-        const float textWidth = static_cast<float>(title.size()) * 18 - 3;
-        rect(std::round((w - textWidth) * 0.5f) - 12, std::round(h * 0.5f) - 22, textWidth + 24, 40,
-             Color::FromHex(0x152219, 220));
-        art::DrawPixelText(batch, title, std::round((w - textWidth) * 0.5f * s),
-                           std::round((h * 0.5f - 12) * s), 3 * s,
-                           won ? Color::FromHex(0xB6D98A) : Color::FromHex(0xF5A26B));
-    }
-
-    // Folded paper chart with tape tabs, compass and coordinate margin.
-    const float mx = w-151, my = 17;
-    rect(mx+4, my+5, 132, 131, Color::FromHex(0x152219, 130));
-    rect(mx, my, 130, 128, paper);
-    rect(mx, my, 4, 128, shade);
-    rect(mx+128, my+3, 3, 122, shade);
-    rect(mx+8, my-3, 28, 7, Color::FromHex(0xB9B58A));
-    rect(mx+92, my-3, 28, 7, Color::FromHex(0xB9B58A));
-    text("PETA", mx+11, my+10, ink);
-    text("LAPANGAN", mx+11, my+21, ink);
-    text("U", mx+114, my+8, ink);
-    rect(mx+116, my+18, 1, 10, ink);
-    rect(mx+114, my+20, 5, 1, ink);
-    rect(mx+115, my+19, 3, 1, ink);
-    rect(mx+11, my+33, 108, 1, shade);
-    const engine::Rect mapRect{(mx+11)*s, (my+40)*s, 108*s, 72*s};
-    rect(mx+10, my+39, 110, 74, ink);
+    // The instrument rail is outside the world viewport, including the minimap.
+    const float y = h - 64;
+    rect(0, y, w, 64, ink);
+    rect(0, y, w, 1, Color::FromHex(0x8C9C70));
+    rect(0, y + 1, w, 2, Color::FromHex(0x0C1B16));
+    const engine::Rect mapRect{10*s, (y+9)*s, 72*s, 48*s};
+    rect(8, y+7, 76, 52, paper);
     batch.Draw(*m_minimap, mapRect);
-    rect(mx+47, my+40, 1, 72, Color::FromHex(0xFFF0CB, 35));
-    rect(mx+83, my+40, 1, 72, Color::FromHex(0x29271F, 25));
-    const auto world = m_map.GetBounds();
-    const auto view = m_camera.GetVisibleArea();
+    const auto world = m_map.GetBounds(), view = m_camera.GetVisibleArea();
     const float left = std::clamp(view.Left(), 0.0f, world.w);
     const float right = std::clamp(view.Right(), 0.0f, world.w);
     const float top = std::clamp(view.Top(), 0.0f, world.h);
     const float bottom = std::clamp(view.Bottom(), 0.0f, world.h);
     batch.DrawRectOutline({std::round(mapRect.x + left/world.w*mapRect.w),
         std::round(mapRect.y + top/world.h*mapRect.h),
-        std::round((right-left)/world.w*mapRect.w),
-        std::round((bottom-top)/world.h*mapRect.h)}, s, Color::FromHex(0xFFF0CB, 150));
+        std::round((right-left)/world.w*mapRect.w), std::round((bottom-top)/world.h*mapRect.h)},
+        s, Color::FromHex(0xFFF0CB, 160));
+    auto mark = [&](Vec2 position, Color color, float radius) {
+        // Keep markers inside the chart frame, including at the map edges.
+        const float x = std::clamp(10 + position.x/world.w*72, 10 + radius, 82 - radius);
+        const float my = std::clamp(y+9 + position.y/world.h*48, y+9 + radius, y+57 - radius);
+        rect(x-radius, my-radius, radius*2+1, radius*2+1, color);
+    };
     const bool blink = std::fmod(m_time, 0.6f) < 0.4f;
     std::as_const(m_entities).ForEach<Fire>([&](const Fire& fire) {
-        const float fx = mx+11+std::round(fire.GetPosition().x/world.w*108);
-        const float fy = my+40+std::round((fire.GetPosition().y-8)/world.h*72);
-        rect(fx-1, fy-1, 3, 3, blink ? Color::FromHex(0xFF5A2A) : Color::FromHex(0xFFC14D));
+        mark(fire.GetPosition() - Vec2{0,8}, Color::FromHex(blink ? 0xFF703D : 0xFFC14D), 1);
     });
-    const auto mark = [&](Vec2 position, Color color) {
-        const float x = mx+11+std::round(position.x/world.w*108);
-        const float y = my+40+std::round(position.y/world.h*72);
-        rect(x-1, y-1, 3, 3, color);
-    };
-    mark(StageActor::CellCenter(StageActor::ToCell(m_map.GetCenter())), Color::FromHex(0x79A949));
+    mark(m_map.GetCenter(), moss, 1);
     std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) {
-        if (actor.IsAnimal() && actor.GetRescue() != StageActor::Rescue::Saved &&
-            actor.GetRescue() != StageActor::Rescue::Burned) {
-            mark(actor.GetRenderPosition(alpha), Color::FromHex(0xF5EBCE));
-        }
+        if (actor.IsAnimal() && actor.GetRescue() != StageActor::Rescue::Saved && actor.GetRescue() != StageActor::Rescue::Burned)
+            mark(actor.GetRenderPosition(alpha), cream, 1);
     });
-    const Vec2 player = m_player.GetRenderPosition(alpha);
-    const float px = mx+11+std::round(player.x/world.w*108);
-    const float py = my+40+std::round(player.y/world.h*72);
-    rect(px-2, py-2, 5, 5, edge);
-    rect(px-1, py-1, 3, 3, cream);
-    rect(px, py, 1, 1, Color::FromHex(0xB45D41));
-    switch (m_player.GetFacing()) {
-    case Facing::Up: rect(px, py-4, 1, 2, cream); break;
-    case Facing::Down: rect(px, py+3, 1, 2, cream); break;
-    case Facing::Left: rect(px-4, py, 2, 1, cream); break;
-    case Facing::Right: rect(px+3, py, 2, 1, cream); break;
-    }
-    auto coordinate = [](int value) {
-        return (value < 10 ? std::string("0") : std::string()) + std::to_string(value);
-    };
-    text("X:" + coordinate(static_cast<int>(player.x/config::TileSize)) +
-         " Y:" + coordinate(static_cast<int>(player.y/config::TileSize)), mx+11, my+118, ink);
-    text(std::to_string(m_zoom)+"X", mx+106, my+118, ink);
+    mark(m_player.GetRenderPosition(alpha), Color::FromHex(0x101F1A), 2);
+    mark(m_player.GetRenderPosition(alpha), Color::FromHex(0x91E4F1), 1);
+    text("U", 94, y+9, paper);
+    rect(96, y+20, 1, 8, muted); rect(94, y+21, 5, 1, muted);
+    text(std::to_string(m_zoom)+"X", 90, y+42, muted);
+    rect(113, y+10, 1, 44, rule);
 
-    // Compact physical keycaps react to both WASD and the arrow keys.
-    const float by = h-51;
-    rect(10, by-4, 322, 45, Color::FromHex(0x152219, 195));
-    const auto& input = App().GetInput();
-    auto keycap = [&](std::string_view key, float x, float y, float width, bool down) {
-        rect(x, y+2, width, 12, edge);
-        rect(x, y+(down ? 2 : 0), width, 11, down ? moss : paper);
-        if (!down) rect(x+1, y+1, width-2, 1, cream);
-        text(key, x+(width-static_cast<float>(key.size())*6+1)*0.5f,
-             y+(down ? 4 : 2), down ? cream : ink);
-    };
-    keycap("W", 32, by, 13, input.IsKeyDown(Key::W) || input.IsKeyDown(Key::Up));
-    keycap("A", 17, by+15, 13, input.IsKeyDown(Key::A) || input.IsKeyDown(Key::Left));
-    keycap("S", 32, by+15, 13, input.IsKeyDown(Key::S) || input.IsKeyDown(Key::Down));
-    keycap("D", 47, by+15, 13, input.IsKeyDown(Key::D) || input.IsKeyDown(Key::Right));
-    text("JELAJAH", 69, by+5, cream);
-    text("WASD / PANAH", 69, by+19, shade);
-    rect(150, by+2, 1, 26, Color::FromHex(0xFFF0CB, 60));
-    keycap("ESC", 162, by+3, 23, input.IsKeyDown(Key::Escape));
-    text("MENU", 192, by+6, cream);
-    text("SCROLL: ZOOM", 162, by+21, shade);
-    rect(240, by+2, 1, 26, Color::FromHex(0xFFF0CB, 60));
-    // Mouse with the left button lit while spraying.
-    const bool sprayDown = input.IsMouseDown(engine::MouseButton::Left);
-    rect(252, by+3, 11, 16, edge);
-    rect(253, by+4, 9, 14, paper);
-    rect(253, by+4, 4, 6, sprayDown ? Color::FromHex(0x5FB8E0) : shade);
-    rect(257, by+4, 1, 6, edge);
-    text("SEMPROT", 270, by+5, cream);
-    text("KLIK KIRI", 270, by+19, shade);
+    const auto& tank = m_player.GetTank();
+    const int percent = static_cast<int>(std::round(tank.GetFraction()*100));
+    const Color water = tank.GetFraction() < 0.2f ? Color::FromHex(0xF29B70) : Color::FromHex(0x73CBDF);
+    text("AIR", 128, y+11, muted);
+    rect(155, y+10, 115, 9, Color::FromHex(0x091A15));
+    rect(157, y+12, std::round(111*tank.GetFraction()), 5, water);
+    text(std::to_string(percent)+"%", 280, y+11, water);
+    text("API " + std::to_string(m_entities.Count<Fire>()), 128, y+30, Color::FromHex(0xF4B376));
+    text("PADAM " + std::to_string(m_firesPutOut), 207, y+30, muted);
+    text("SATWA " + std::to_string(m_rescued) + "/" + std::to_string(m_stageConfig.rescueTarget), 128, y+47, moss);
+    text("TARGET SELAMAT", 207, y+47, muted);
+    rect(326, y+10, 1, 44, rule);
+
+    std::string status = "DEKATI SATWA UNTUK MENOLONG";
+    Color statusColor = paper;
+    if (m_player.IsRefilling()) { status = "MENGISI AIR DI TEPI KOLAM"; statusColor = water; }
+    else if (tank.GetAmount() < config::WaterPerDrop) { status = "AIR HABIS - KEMBALI KE KOLAM"; statusColor = water; }
+    else if (m_rangerBlocked) { status = "JALAN DIHADANG - CARI CELAH"; statusColor = Color::FromHex(0xF4B376); }
+    text("CATATAN PATROLI", 342, y+11, muted);
+    text(status, 342, y+29, statusColor);
+    text("WASD GERAK  /  KLIK SEMPROT", 342, y+47, muted);
+    text("SCROLL ZOOM / ESC MENU", w-140, y+11, muted);
+    // At the standard width these hints share the same rail; wider windows get breathing room.
+
+    if (m_rules.GetOutcome() != StageOutcome::Playing) {
+        const bool won = m_rules.GetOutcome() == StageOutcome::Won;
+        const std::string title = won ? "OBJEKTIF TERCAPAI" :
+            m_rules.GetOutcome() == StageOutcome::LostSawit ? "HUTAN JADI SAWIT" :
+            m_rules.GetOutcome() == StageOutcome::LostAnimals ? "TARGET SATWA GAGAL" : "WAKTU HABIS";
+        const float tw = static_cast<float>(title.size()) * 18 - 3;
+        rect((w-tw)*0.5f-12, h*0.5f-22, tw+24, 40, Color::FromHex(0x152219, 230));
+        art::DrawPixelText(batch, title, std::round((w-tw)*0.5f*s), std::round((h*0.5f-12)*s), 3*s,
+                           won ? moss : Color::FromHex(0xF5A26B));
+    }
     batch.End();
 }
 

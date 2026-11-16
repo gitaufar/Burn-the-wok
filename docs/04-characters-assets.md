@@ -87,6 +87,13 @@ Menggambar penyemprot sebagai gambar terpisah di atas badan terlihat tidak menya
 
 Skrip ini alat bantu pengembangan (Python + Pillow), **bukan** dependency gim: gim hanya memuat PNG hasilnya. Jalankan ulang jika sprite karakter/penyemprot diganti: `python tools/assets/compose_ranger.py` (opsi `--preview file.png` untuk lembar pratinjau). File asli `Front 1.png` dst. tetap disimpan sebagai sumber.
 
+### Ukuran dan ketajaman Wowo/Tedduy (16/11/2026)
+
+- `StageActor` memakai 16 frame dari masing-masing folder `characters/wowo/` dan `characters/tedduy/` untuk kedua bos di stage 3.
+- Tinggi visual semua karakter yang memakai aset Wowo/Tedduy = `config::AntagonistHeight` = 1,3 kali `PlayerHeight`: **33,8 px dunia**, dibanding Ranger **26 px dunia**. Ukuran diturunkan dari 1,6 kali setelah pengguna menilai tampilan terlalu besar. Ini berlaku untuk bos stage 3 dan karakter sabotase stage 2 yang sementara memakai aset Wowo. Proporsi gambar dipertahankan; satu skala dan satu batas potong gabungan menjaga posisi badan/kaki konsisten pada seluruh arah dan frame.
+- Gambar sumber 80x80 diproses sekali saat dimuat menjadi tekstur **160x160** dengan Scale2x, melalui `art/SpriteDetail.h` yang juga dipakai Ranger. Filter tekstur tetap nearest dan koordinat gambar dibulatkan ke piksel layar sesuai zoom agar tepi pixel art tetap tajam. Ini pembesaran pixel art sumber, bukan penambahan detail gambar HD baru.
+- PNG sumber, ukuran Ranger, serta hitbox dan perilaku AI tetap mengikuti pengaturan sebelumnya. Pemilihan ukuran/peningkatan tekstur berdasarkan kelompok aset manusia, terpisah dari perilaku menghadang pemain.
+
 ### Placeholder di kode (Tahap 1)
 
 Bukan file aset: atlas 128×16 px digambar piksel demi piksel oleh `Burn The Wok/src/art/PlaceholderArt.cpp` saat gim berjalan (decoder PNG belum disetujui). Isinya 8 sprite 16×16: rumput, rumput berbunga, pohon, air, dan penjaga hutan 4 arah (bawah/atas/kiri/kanan). Ukuran tile placeholder = **16×16 px** (`GameConfig.h`), ditampilkan dengan zoom 3×. Ini hanya untuk demo; ganti dengan aset asli begitu ada.

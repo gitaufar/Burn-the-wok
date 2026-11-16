@@ -1,5 +1,6 @@
 #include "entities/StageActor.h"
 
+#include "art/SpriteDetail.h"
 #include "systems/FireSystem.h"
 #include "world/ForestMap.h"
 
@@ -31,25 +32,55 @@ void StageActor::LoadArtwork() {
     constexpr const char* Directions[] = {"front", "back", "left", "right"};
     const std::string folder = std::string("assets/characters/") + ArtFolders[static_cast<int>(m_kind)] + "/";
     float tallest = 1.0f;
+    // Visual size follows the human artwork, independently of blocking behavior.
+    const bool human = !IsAnimal();
     for (int i = 0; i < static_cast<int>(m_frames.size()); ++i) {
         const auto image = engine::Image::LoadFromFile(folder + Directions[i / 4] + "_" +
                                                       std::to_string(i % 4 + 1) + ".png");
         m_sources[i] = image.GetContentBounds(16);
+        if (human) {
+            // Texture pixels double, while the visible world height is set below.
+            const auto bounds = m_sources[i];
+            m_sources[i] = {bounds.x * 2, bounds.y * 2, bounds.w * 2, bounds.h * 2};
+        }
         tallest = std::max(tallest, m_sources[i].h);
-        m_frames[i] = std::make_unique<engine::Texture>(image);
+        m_frames[i] = std::make_unique<engine::Texture>(human ? art::BuildDetailedSprite(image) : image);
     }
-    m_artScale = (IsAnimal() ? 20.0f : config::PlayerHeight) / tallest;
+    if (human) {
+        // One shared crop anchors every direction and walk frame to the same feet
+        // line and canvas center, including frames where one leg is lifted.
+        auto bounds = m_sources[0];
+        for (const auto& source : m_sources) {
+            const float left = std::min(bounds.x, source.x);
+            const float top = std::min(bounds.y, source.y);
+            const float right = std::max(bounds.Right(), source.Right());
+            const float bottom = std::max(bounds.Bottom(), source.Bottom());
+            bounds = {left, top, right - left, bottom - top};
+        }
+        m_sources.fill(bounds);
+        tallest = bounds.h;
+    }
+    const float height = human ? config::AntagonistHeight : 20.0f;
+    m_artScale = height / tallest;
 }
 
 void StageActor::Draw(engine::SpriteBatch& batch, float alpha) const {
+    Draw(batch, alpha, 1.0f);
+}
+
+void StageActor::Draw(engine::SpriteBatch& batch, float alpha, float zoom) const {
     if (m_rescue == Rescue::Saved || m_rescue == Rescue::Burned) return;
     const int frame = m_facing * 4 + static_cast<int>(m_walkTime * 10.0f) % 4;
     if (!m_frames[frame]) return;
     const auto source = m_sources[frame];
-    const Vec2 feet = engine::Round(GetRenderPosition(alpha));
-    const float w = source.w * m_artScale, h = source.h * m_artScale;
+    const float pixelsPerUnit = std::max(1.0f, zoom);
+    const auto snap = [pixelsPerUnit](float value) {
+        return std::round(value * pixelsPerUnit) / pixelsPerUnit;
+    };
+    const Vec2 feet = GetRenderPosition(alpha);
+    const float w = snap(source.w * m_artScale), h = snap(source.h * m_artScale);
     const Color tint = m_rescue == Rescue::Panicked ? Color::FromHex(0xFFC88F) : Color::White();
-    batch.Draw(*m_frames[frame], {feet.x - w * 0.5f, feet.y - h + 2, w, h}, source, tint);
+    batch.Draw(*m_frames[frame], {snap(feet.x - w * 0.5f), snap(feet.y - h + 2), w, h}, source, tint);
 }
 
 Cell StageActor::ToCell(Vec2 position) {

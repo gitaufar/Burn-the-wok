@@ -31,6 +31,7 @@ public:
     StageActor(Kind kind, engine::Vec2 position);
     void LoadArtwork();
     void Draw(engine::SpriteBatch& batch, float alpha) const override;
+    void Draw(engine::SpriteBatch& batch, float alpha, float zoom) const;
     void Step(float dt, ForestMap& map, engine::EntityWorld& world, FireSystem& fires,
               engine::Vec2 ranger, const engine::Rect& rangerFeet);
     bool IsAnimal() const { return m_kind <= Kind::Owl; }

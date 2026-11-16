@@ -4,6 +4,8 @@
 #include "audio/SoundBank.h"
 
 #include <engine/core/Scene.h>
+#include <engine/graphics/Texture.h>
+#include <engine/math/Rect.h>
 
 #include <memory>
 
@@ -13,8 +15,7 @@
 namespace game {
 
 // Win ("Menang") or lose ("Kalah") screen with the reason and the stage numbers.
-// Placeholder visuals until the UI system and star rating arrive in Stage 6.
-// Enter/Space continues the campaign or retries. Esc returns to the menu.
+// Field report with mouse buttons and keyboard shortcuts.
 class ResultScene : public engine::Scene {
 public:
     enum class Outcome { Win, Lose };
@@ -42,9 +43,16 @@ public:
 
 private:
     const char* ActionHint() const;
+    const char* ActionLabel() const;
+    bool ReturnsToMenu() const;
+    void Activate(bool menu);
     Outcome m_outcome;
     Summary m_summary;
     std::unique_ptr<SoundBank> m_sfx;
+    std::unique_ptr<engine::Texture> m_tree, m_ranger;
+    engine::Rect m_treeSource, m_rangerSource;
+    float m_time = 0.0f;
+    int m_hovered = 0;
 };
 
 } // namespace game

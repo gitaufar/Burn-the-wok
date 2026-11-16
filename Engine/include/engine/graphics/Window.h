@@ -2,6 +2,7 @@
 
 #include "engine/graphics/Color.h"
 #include "engine/math/Vec2.h"
+#include "engine/math/Rect.h"
 
 #include <string>
 
@@ -27,6 +28,8 @@ public:
     void SetClearColor(Color color) { m_clearColor = color; }
 
     void BeginFrame(); // sets the viewport and clears the screen
+    // Restrict rendering to a screen rectangle, with a top-left origin.
+    void SetViewport(const Rect& area);
     void Present();    // swaps front/back buffers
 
     void HandleResize(); // re-reads the drawable size after the OS resized the window
