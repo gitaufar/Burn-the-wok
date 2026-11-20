@@ -1,4 +1,5 @@
 #include "audio/SoundBank.h"
+#include <engine/core/AssetPath.h>
 
 #include <engine/core/Log.h>
 
@@ -20,13 +21,13 @@ void SoundBank::Load(std::initializer_list<const char*> names) {
             // name_1.wav, name_2.wav, ... until one is missing
             for (int i = 1; i <= MaxVariants; ++i) {
                 const fs::path path = std::string(SfxFolder) + name + "_" + std::to_string(i) + ".wav";
-                if (!fs::exists(path)) break;
+                if (!fs::exists(engine::ResolveAssetPath(path))) break;
                 entry.variants.push_back(m_audio.LoadSound(path));
             }
             // otherwise a single name.wav
             if (entry.variants.empty()) {
                 const fs::path path = std::string(SfxFolder) + name + ".wav";
-                if (fs::exists(path)) entry.variants.push_back(m_audio.LoadSound(path));
+                if (fs::exists(engine::ResolveAssetPath(path))) entry.variants.push_back(m_audio.LoadSound(path));
             }
         } catch (const std::exception& e) {
             engine::LogError("Sound '%s' skipped: %s", name, e.what());

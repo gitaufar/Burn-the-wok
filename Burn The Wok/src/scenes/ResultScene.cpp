@@ -1,6 +1,7 @@
 #include "scenes/ResultScene.h"
 
 #include "GameConfig.h"
+#include "systems/StarRating.h"
 #include "art/PixelText.h"
 #include "scenes/MenuScene.h"
 #include "scenes/GameplayScene.h"
@@ -57,7 +58,9 @@ void ResultScene::OnEnter() {
     m_rangerSource = ranger.GetContentBounds(16);
     m_ranger = std::make_unique<engine::Texture>(ranger);
     m_sfx = std::make_unique<SoundBank>(App().GetAudio());
-    m_sfx->Load({"win", "lose", "ui_click", "ui_hover"});
+    m_sfx->Load({"win", "lose", "ui_click", "ui_hover", "stage_clear_star"});
+    m_stars = m_summary.hasStats ? CalculateStars(m_outcome == Outcome::Win,
+        m_summary.forestPercent, m_summary.rescued, m_summary.totalAnimals) : 0;
     m_sfx->Play(m_outcome == Outcome::Win ? "win" : "lose", config::sound::Result);
 }
 void ResultScene::Activate(bool menu) {
@@ -71,6 +74,11 @@ void ResultScene::Activate(bool menu) {
 }
 void ResultScene::Update(float dt) {
     m_time += dt;
+    const int reveal = std::min(m_stars, std::max(0, static_cast<int>((m_time - 0.4f) / 0.3f)));
+    if (reveal > m_revealedStars) {
+        m_revealedStars = reveal;
+        m_sfx->Play("stage_clear_star", 0.7f);
+    }
     const auto& input = App().GetInput();
     const Layout layout(App().GetWindow().GetSize());
     const auto mouse = input.GetMousePosition();
@@ -193,7 +201,24 @@ void ResultScene::Draw(float /*alpha*/) {
         text("PATROLI BERAKHIR", 564, 235, 2, ink);
         text("RINGKASAN LAPANGAN TIDAK TERSEDIA.", 564, 269, 1.5f, faded);
     }
-    rect(564, 394, 492, 1, rule);
+    if (m_summary.hasStats) {
+        text("PENILAIAN", 564, 382, 1.2f, faded);
+        for (int i = 0; i < 3; ++i) {
+            const auto color = i < m_revealedStars ? Color::FromHex(0xAD791F) : rule;
+            const float x = 929.0f + i * 44;
+            constexpr const char* shape[] = {
+                "     #     ", "    ###    ", "    ###    ", "###########",
+                " ######### ", "  #######  ", "  #######  ", "  ### ###  ",
+                " ###   ### ", " ##     ## "
+            };
+            for (int row = 0; row < 10; ++row) {
+                for (int col = 0; col < 11; ++col) {
+                    if (shape[row][col] == '#') rect(x + col*2, 378 + row*2, 2, 2, color);
+                }
+            }
+        }
+    }
+    rect(564, 406, 492, 1, rule);
     text(win ? "LANGKAH BERIKUTNYA" : "UNTUK PATROLI BERIKUTNYA", 564, 411, 1.2f, faded);
     text(win ? (completed ? "TERIMA KASIH SUDAH MENJAGA HUTAN." : "SIAPKAN AIR. TANTANGAN BARU MENUNGGU.") :
          "PADAMKAN API TERDEKAT, LALU DEKATI SATWA.", 564, 432, 1.4f, ink);

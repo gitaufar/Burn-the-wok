@@ -84,7 +84,9 @@ void GameplayScene::OnEnter() {
 
     m_sfx = std::make_unique<SoundBank>(App().GetAudio());
     m_sfx->Load({"stage_start", "footstep", "footstep_grass", "water_spray", "water_refill", "tank_empty",
-                 "fire_loop", "fire_out", "fire_spread", "tree_to_palm", "timer_warning"});
+                 "fire_loop", "fire_out", "fire_spread", "tree_to_palm", "timer_warning", "pause_in", "pause_out", "ui_click",
+                 "animal_saved", "animal_burned", "animal_panic_orangutan", "animal_panic_bekantan",
+                 "animal_panic_burung_hantu", "saboteur_ignite", "saboteur_plant_seed", "boss_appear"});
     try {
         m_music = App().GetAudio().LoadSound("assets/audio/music/gameplay.wav");
         m_musicVoice = App().GetAudio().Play(m_music, 0.0f, true); // faded in from UpdateSound()
@@ -92,10 +94,11 @@ void GameplayScene::OnEnter() {
         engine::LogError("Gameplay music unavailable: %s", e.what()); // the game still works in silence
     }
     m_sfx->Play("stage_start", config::sound::StageStart);
+    if (m_stage == config::StageId::LastForest) m_sfx->Play("boss_appear", 0.7f);
 
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
                                " - " + m_stageConfig.name + " | WASD/panah: gerak, klik kiri: semprot, tepi kolam: isi air, "
-                               "F1: menang, F2: kalah, F3: hitbox, F4: nyalakan api, Esc: menu");
+                               "F1: menang, F2: kalah, F3: hitbox, F4: nyalakan api, Esc: pause");
     App().GetWindow().SetClearColor(Color::FromHex(0x1B3027));
 }
 
@@ -123,6 +126,7 @@ void GameplayScene::SpawnActors() {
 }
 
 void GameplayScene::OnExit() {
+    App().GetAudio().SetPaused(false);
     StopSounds();
 }
 
@@ -141,13 +145,18 @@ void GameplayScene::Update(float dt) {
         if (m_endTimer >= config::ResultDelay) FinishStage();
         return;
     }
-    m_time += dt;
     const engine::Input& input = App().GetInput();
-
     if (input.IsKeyPressed(Key::Escape)) {
-        App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+        m_paused = !m_paused;
+        App().GetAudio().SetPaused(m_paused);
+        m_sfx->Play(m_paused ? "pause_in" : "pause_out", config::sound::UiClick);
         return;
     }
+    if (m_paused) {
+        UpdatePause();
+        return;
+    }
+    m_time += dt;
     // Debug shortcuts for checking the result screens.
     if (input.IsKeyPressed(Key::F1)) {
         App().GetScenes().SwitchTo(std::make_unique<ResultScene>(ResultScene::Outcome::Win));
@@ -169,11 +178,11 @@ void GameplayScene::Update(float dt) {
 
     m_rangerBlocked = false;
     std::as_const(m_entities).ForEach<StageActor>([&](const StageActor& actor) {
-        if (actor.BlocksRanger() && (actor.GetPosition() - m_player.GetPosition()).LengthSquared() < 18.0f * 18.0f) {
+        if (actor.BlocksRanger() && (actor.GetPosition() - m_player.GetPosition()).LengthSquared() < config::BossBlockDistance * config::BossBlockDistance) {
             m_rangerBlocked = true;
         }
     });
-    m_player.Update(input, dt, m_map, m_rangerBlocked ? 0.55f : 1.0f);
+    m_player.Update(input, dt, m_map, m_rangerBlocked ? config::BossSlowMultiplier : 1.0f);
 
     // Spray toward the mouse. The camera is from the last drawn frame, which is what
     // the player is looking at when they click.
@@ -203,8 +212,26 @@ void GameplayScene::Update(float dt) {
     m_rescued = 0;
     m_pendingAnimals = 0;
     m_entities.ForEach<StageActor>([&](StageActor& actor) {
+        const auto previousRescue = actor.GetRescue();
+        const int previousIgnitions = actor.GetIgnitionsLeft();
         actor.Step(dt, m_map, m_entities, *m_fireSystem, m_player.GetPosition(), m_player.GetHitbox());
-        if (actor.IsPlanting()) ++step.turnedToSawit;
+        if (actor.IsPlanting()) {
+            ++step.turnedToSawit;
+            m_sfx->Play("saboteur_plant_seed", 0.7f);
+        }
+        if (actor.GetIgnitionsLeft() < previousIgnitions) m_sfx->Play("saboteur_ignite", 0.7f);
+        if (actor.GetRescue() != previousRescue) {
+            switch (actor.GetRescue()) {
+            case StageActor::Rescue::Panicked: {
+                constexpr const char* panic[] = {"animal_panic_orangutan", "animal_panic_bekantan", "animal_panic_burung_hantu"};
+                m_sfx->Play(panic[static_cast<int>(actor.GetKind())], 0.65f);
+                break;
+            }
+            case StageActor::Rescue::Saved: m_sfx->Play("animal_saved", 0.7f); break;
+            case StageActor::Rescue::Burned: m_sfx->Play("animal_burned", 0.65f); break;
+            default: break;
+            }
+        }
         if (!actor.IsAnimal()) return;
         if (actor.GetRescue() == StageActor::Rescue::Saved) ++m_rescued;
         else if (actor.GetRescue() != StageActor::Rescue::Burned) ++m_pendingAnimals;
@@ -218,6 +245,63 @@ void GameplayScene::Update(float dt) {
         m_rules.Update(dt, m_entities.Count<Fire>(), m_map.CountTiles(TileType::Sawit),
                        m_map.CountTiles(TileType::Charred), m_rescued, m_pendingAnimals);
     UpdateSound(dt, trigger, putOut, step, outcome);
+}
+
+namespace {
+engine::Rect PauseButton(engine::Vec2 size, int index) {
+    const float scale = std::min(size.x / 640.0f, size.y / 360.0f);
+    return {size.x * 0.5f - 135 * scale, size.y * 0.5f - 25 * scale + index * 36 * scale,
+            270 * scale, 29 * scale};
+}
+}
+
+void GameplayScene::UpdatePause() {
+    const auto& input = App().GetInput();
+    const auto size = App().GetWindow().GetSize();
+    if (input.IsKeyPressed(Key::Up) || input.IsKeyPressed(Key::W)) m_pauseSelection = (m_pauseSelection + 2) % 3;
+    if (input.IsKeyPressed(Key::Down) || input.IsKeyPressed(Key::S)) m_pauseSelection = (m_pauseSelection + 1) % 3;
+    bool activate = input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) ||
+                    input.IsKeyPressed(Key::Space);
+    for (int i = 0; i < 3; ++i) {
+        if (PauseButton(size, i).Contains(input.GetMousePosition()) &&
+            input.IsMousePressed(engine::MouseButton::Left)) {
+            m_pauseSelection = i;
+            activate = true;
+        }
+    }
+    if (!activate) return;
+    if (m_pauseSelection == 0) {
+        m_paused = false;
+        App().GetAudio().SetPaused(false);
+        m_sfx->Play("pause_out", config::sound::UiClick);
+    } else if (m_pauseSelection == 1) {
+        App().GetScenes().SwitchTo(std::make_unique<GameplayScene>(m_stage));
+    } else {
+        App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+    }
+}
+
+void GameplayScene::DrawPause() {
+    const auto size = App().GetWindow().GetSize();
+    const float scale = std::min(size.x / 640.0f, size.y / 360.0f);
+    engine::Camera2D camera;
+    camera.SetViewportSize(size);
+    camera.SetPosition(size * 0.5f);
+    auto& batch = App().GetSpriteBatch();
+    batch.Begin(camera.GetViewProjection());
+    batch.DrawRect({0, 0, size.x, size.y}, Color::FromHex(0x081B15, 210));
+    const auto first = PauseButton(size, 0);
+    batch.DrawRect({first.x - 20*scale, first.y - 65*scale, 310*scale, 192*scale}, Color::FromHex(0xE8DCBB));
+    art::DrawPixelText(batch, "PATROLI DIJEDA", first.x, first.y - 47*scale, 2*scale, Color::FromHex(0x283C32));
+    art::DrawPixelText(batch, "WAKTU DAN SIMULASI BERHENTI", first.x, first.y - 23*scale, scale, Color::FromHex(0x73765F));
+    constexpr const char* labels[] = {"LANJUTKAN", "ULANGI STAGE", "KEMBALI KE MENU"};
+    for (int i = 0; i < 3; ++i) {
+        const auto box = PauseButton(size, i);
+        const bool selected = i == m_pauseSelection || box.Contains(App().GetInput().GetMousePosition());
+        batch.DrawRect(box, Color::FromHex(selected ? 0x48664A : 0x283C32));
+        art::DrawPixelText(batch, labels[i], box.x + 12*scale, box.y + 10*scale, scale, Color::FromHex(0xF8EDCE));
+    }
+    batch.End();
 }
 
 void GameplayScene::UpdateSound(float dt, bool trigger, int firesPutOut, const FireSystem::StepResult& step,
@@ -347,6 +431,7 @@ void GameplayScene::FinishStage() {
     summary.hasStats = true;
     summary.stage = m_stage;
     summary.rescued = m_rescued;
+    summary.totalAnimals = m_stageConfig.animalCount;
     summary.rescueTarget = m_stageConfig.rescueTarget;
     summary.forestPercent = static_cast<int>(std::round(m_rules.GetForestFraction() * 100.0f));
     summary.sawitPercent = static_cast<int>(std::round(m_rules.GetSawitFraction() * 100.0f));
@@ -437,7 +522,7 @@ void GameplayScene::UpdateCamera(float alpha) {
 }
 
 void GameplayScene::Draw(float alpha) {
-    if (m_rules.GetOutcome() != StageOutcome::Playing) alpha = 1.0f;
+    if (m_paused || m_rules.GetOutcome() != StageOutcome::Playing) alpha = 1.0f;
     UpdateCamera(alpha);
 
     engine::SpriteBatch& batch = App().GetSpriteBatch();
@@ -494,6 +579,7 @@ void GameplayScene::Draw(float alpha) {
 
     batch.End();
     DrawOverlay(alpha);
+    if (m_paused) DrawPause();
 }
 
 void GameplayScene::DrawOverlay(float alpha) {
@@ -595,7 +681,7 @@ void GameplayScene::DrawOverlay(float alpha) {
     text("CATATAN PATROLI", 342, y+11, muted);
     text(status, 342, y+29, statusColor);
     text("WASD GERAK  /  KLIK SEMPROT", 342, y+47, muted);
-    text("SCROLL ZOOM / ESC MENU", w-140, y+11, muted);
+    text("SCROLL ZOOM / ESC PAUSE", w-140, y+11, muted);
     // At the standard width these hints share the same rail; wider windows get breathing room.
 
     if (m_rules.GetOutcome() != StageOutcome::Playing) {

@@ -1,6 +1,6 @@
 #include "engine/core/Log.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include <cstdarg>
 #include <cstdio>

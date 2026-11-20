@@ -105,6 +105,7 @@
     <ClInclude Include="src\systems\FireSystem.h" />
     <ClInclude Include="src\systems\Sprayer.h" />
     <ClInclude Include="src\systems\StageRules.h" />
+    <ClInclude Include="src\systems\StarRating.h" />
     <ClInclude Include="src\systems\WaterTank.h" />
     <ClInclude Include="src\scenes\GameplayScene.h" />
     <ClInclude Include="src\scenes\IntroScene.h" />
