@@ -1,8 +1,9 @@
 #include "engine/audio/Audio.h"
+#include <engine/core/AssetPath.h>
 
 #include "engine/core/Log.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include <algorithm>
 #include <cmath>
@@ -65,7 +66,7 @@ AudioSystem::~AudioSystem() {
 }
 
 std::shared_ptr<const Sound> AudioSystem::LoadSound(const std::filesystem::path& path) const {
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(ResolveAssetPath(path), std::ios::binary);
     if (!file) {
         throw std::runtime_error("LoadSound: cannot open " + path.string());
     }
@@ -207,6 +208,13 @@ bool AudioSystem::IsPlaying(VoiceId voice) const {
     return playing;
 }
 
+void AudioSystem::SetPaused(bool paused) {
+    if (m_device == 0) return;
+    SDL_LockAudioDevice(m_device);
+    m_paused = paused;
+    SDL_UnlockAudioDevice(m_device);
+}
+
 void AudioSystem::SetMasterVolume(float volume) {
     if (m_device == 0) return;
     SDL_LockAudioDevice(m_device);
@@ -221,7 +229,7 @@ void AudioSystem::MixInto(std::int16_t* out, int frames) {
     mix.assign(static_cast<std::size_t>(frames) * 2, 0.0f);
 
     for (Voice& v : m_voices) {
-        if (!v.active) continue;
+        if (!v.active || (m_paused && v.loop)) continue;
         const std::int16_t* samples = v.sound->m_samples.data();
         const std::size_t total = static_cast<std::size_t>(v.sound->GetFrameCount());
         const float gain = v.volume * m_masterVolume * (1.0f / 32768.0f);

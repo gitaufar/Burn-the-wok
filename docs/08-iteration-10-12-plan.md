@@ -70,8 +70,8 @@ git switch -c feat/iteration-10-core-gameplay origin/main
 
 ## Iterasi 11 — UI, audio, dan balancing awal
 
-- [ ] Tambahkan pause/resume yang menghentikan timer, AI, dan simulasi. Lengkapi layar hasil dengan penilaian 1–3 bintang dari persentase hutan dan jumlah satwa selamat, serta perjelas aksi lanjut, ulangi, dan kembali ke menu.
-- [ ] Hubungkan SFX satwa, sabotase, boss, pause, dan bintang. Perbaiki path audio dan narasi untuk peluncuran dari folder kerja yang berbeda.
+- [x] Tambahkan pause/resume yang menghentikan timer, AI, dan simulasi. Lengkapi layar hasil dengan penilaian 1–3 bintang dari persentase hutan dan jumlah satwa selamat, serta perjelas aksi lanjut, ulangi, dan kembali ke menu.
+- [x] Hubungkan SFX satwa, sabotase, boss, pause, dan bintang. Perbaiki path audio dan narasi untuk peluncuran dari folder kerja yang berbeda.
 - [ ] Uji tiga stage dengan pemain lain. Setel waktu, titik api, laju sebar, kapasitas air, dan kuota satwa. Cek keterbacaan HUD, api, satwa, dan efek semprotan pada ukuran jendela berbeda.
 
 ## Iterasi 12 — Stabilitas dan rilis

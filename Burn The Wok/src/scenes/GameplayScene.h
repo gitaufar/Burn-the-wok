@@ -21,7 +21,7 @@ namespace game {
 // WASD/arrows = move, hold left mouse = spray toward the cursor, mouse wheel = zoom,
 // F1/F2 = jump to win/lose screen (debug), F3 = show hitboxes and solid tiles (debug),
 // F4 = set the tree under the cursor on fire (debug),
-// Esc = back to the menu (a real pause screen comes in Stage 6).
+// Esc = pause/resume.
 class GameplayScene : public engine::Scene {
 public:
     explicit GameplayScene(config::StageId stage = config::StageId::FirstFire);
@@ -39,6 +39,8 @@ private:
     // Water bursting out of the spray gun's nozzle (the gun itself is part of the ranger sprite).
     void DrawWaterBurst(float alpha);
     void RebuildMinimap();
+    void UpdatePause();
+    void DrawPause();
     void SpawnActors();
     // Sound effects and music, driven by what happened this update.
     void UpdateSound(float dt, bool trigger, int firesPutOut, const FireSystem::StepResult& step,
@@ -69,6 +71,8 @@ private:
     std::unique_ptr<FireSystem> m_fireSystem; // created in OnEnter (needs the atlas)
     Sprayer m_sprayer;
     StageRules m_rules; // after m_map: counts the map's trees when constructed
+    bool m_paused = false;
+    int m_pauseSelection = 0;
     int m_firesPutOut = 0;
     int m_rescued = 0;
     int m_pendingAnimals = 0;

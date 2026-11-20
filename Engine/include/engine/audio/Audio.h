@@ -51,6 +51,8 @@ public:
     void SetVoiceVolume(VoiceId voice, float volume);
     void Stop(VoiceId voice);
     void StopAll();
+    // Freeze looping gameplay ambience and music. One-shot UI sounds still play.
+    void SetPaused(bool paused);
     bool IsPlaying(VoiceId voice) const;
     void SetMasterVolume(float volume);
 
@@ -72,6 +74,7 @@ private:
 
     unsigned int m_device = 0; // SDL_AudioDeviceID, 0 = no device
     int m_sampleRate = 44100;
+    bool m_paused = false;
     float m_masterVolume = 1.0f;
     Voice m_voices[VoiceCount];
 };

@@ -1,10 +1,15 @@
 #include "engine/graphics/Image.h"
+#include "engine/core/AssetPath.h"
 
+#ifdef _WIN32
 #define NOMINMAX
 #include <Windows.h>
 #include <wincodec.h>
 #include <wrl/client.h>
-#include <SDL/SDL.h>
+#else
+#include <png.h>
+#endif
+#include <SDL.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -14,6 +19,7 @@
 namespace engine {
 namespace {
 
+#ifdef _WIN32
 class ComApartment {
 public:
     ComApartment() : m_result(CoInitializeEx(nullptr, COINIT_MULTITHREADED)) {
@@ -38,6 +44,17 @@ void CheckResult(HRESULT result, const char* message) {
     }
 }
 
+#else
+// Free decoder state even if pixel allocation or decoding throws.
+struct PngImage {
+    png_image value{};
+    PngImage() { value.version = PNG_IMAGE_VERSION; }
+    ~PngImage() { png_image_free(&value); }
+    PngImage(const PngImage&) = delete;
+    PngImage& operator=(const PngImage&) = delete;
+};
+#endif
+
 } // namespace
 
 Image::Image(int width, int height, Color fill)
@@ -47,16 +64,10 @@ Image::Image(int width, int height, Color fill)
 }
 
 Image Image::LoadFromFile(const std::filesystem::path& path) {
-    ComApartment comApartment;
-    std::filesystem::path resolvedPath = path;
-    if (path.is_relative() && !std::filesystem::exists(path)) {
-        // Packaged games may be launched from a different working directory.
-        if (char* basePath = SDL_GetBasePath()) {
-            resolvedPath = std::filesystem::path(basePath) / path;
-            SDL_free(basePath);
-        }
-    }
+    const auto resolvedPath = ResolveAssetPath(path);
 
+#ifdef _WIN32
+    ComApartment comApartment;
     Microsoft::WRL::ComPtr<IWICImagingFactory> factory;
     CheckResult(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
                                  IID_PPV_ARGS(factory.GetAddressOf())),
@@ -97,6 +108,26 @@ Image Image::LoadFromFile(const std::filesystem::path& path) {
                                       static_cast<UINT>(bufferSize), image.m_pixels.data()),
                 "Image::LoadFromFile: cannot copy image pixels");
     return image;
+#else
+    PngImage png;
+    const std::string filename = resolvedPath.string();
+    if (!png_image_begin_read_from_file(&png.value, filename.c_str())) {
+        throw std::runtime_error("Image::LoadFromFile: " + filename + ": " + png.value.message);
+    }
+    const std::uint64_t bufferSize = static_cast<std::uint64_t>(png.value.width) * png.value.height * 4;
+    if (png.value.width == 0 || png.value.height == 0 ||
+        png.value.width > static_cast<png_uint_32>(std::numeric_limits<int>::max() / 4) ||
+        png.value.height > static_cast<png_uint_32>(std::numeric_limits<int>::max()) ||
+        bufferSize > std::numeric_limits<std::size_t>::max()) {
+        throw std::runtime_error("Image::LoadFromFile: image dimensions are unsupported");
+    }
+    png.value.format = PNG_FORMAT_RGBA;
+    Image image(static_cast<int>(png.value.width), static_cast<int>(png.value.height));
+    if (!png_image_finish_read(&png.value, nullptr, image.m_pixels.data(), 0, nullptr)) {
+        throw std::runtime_error("Image::LoadFromFile: " + filename + ": " + png.value.message);
+    }
+    return image;
+#endif
 }
 
 Rect Image::GetContentBounds(std::uint8_t minAlpha) const {

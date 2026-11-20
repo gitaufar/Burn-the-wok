@@ -164,7 +164,7 @@ Pembaruan UI hasil patroli (16/11/2026): `ResultScene` memakai komposisi hutan/R
 | 3 — Penyebaran api & lahan | **Kode lengkap** (13/11/2026), menunggu uji main manual |
 | 4 — Satwa & AI | Kode terpasang di branch Iterasi 10, menunggu playtest Windows |
 | 5 — Sabotase & 3 stage | Kode dasar terpasang di branch Iterasi 10, menunggu playtest Windows |
-| 6 — UI, audio, polish | Intro, HUD, SFX dasar tersedia. Pause, bintang, dan SFX mekanik baru masih terbuka |
+| 6 — UI, audio, polish | Intro, HUD, pause/resume, bintang, dan SFX mekanik baru tersedia (Iterasi 11); playtest audio/polish masih terbuka |
 | 7 — Play testing & finalisasi | Belum mulai |
 
 Pembaruan visual Wowo/Tedduy 16/11/2026: seluruh aktor manusia yang memakai aset Wowo/Tedduy, termasuk karakter sabotase stage 2, memakai tinggi 1,3 kali Ranger (`AntagonistHeight = 33,8`, `PlayerHeight = 26`). Ukuran diturunkan dari 1,6 kali sesuai umpan balik pengguna agar lebih kecil, tetap lebih tinggi daripada pemain. Koreksi ini memisahkan ukuran visual dari perilaku menghadang pemain; sebelumnya hanya dua bos stage 3 yang diperbesar. Seluruh 16 frame per karakter diproses Scale2x saat dimuat (80x80 menjadi 160x160), dengan filter nearest, satu batas potong untuk seluruh pose, dan penempatan pada piksel layar sesuai zoom. Pemrosesan sprite Ranger memakai helper bersama tanpa mengubah hasilnya. Output build langsung proyek disamakan dengan output solution; executable lama yang masih ada di folder proyek diperbarui bersama DLL/aset agar peluncuran dari lokasi lama juga mendapat perubahan.
@@ -219,3 +219,16 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 | 14/11/2026 | Intro sinematik sebelum menu (`IntroScene`, branch `feat/add-intro`): 3 slide gambar + narasi bergaya ketik, fade, gambar bergerak pelan, lagu `sad_intro`; teks di `assets/intro/narration.txt` (bisa diedit tanpa kompilasi). Untuk suaranya ditambah modul engine `audio` (loader WAV + mixer buatan sendiri di atas perangkat audio SDL2 core, tanpa SDL_mixer). Jalankan `--skip-intro` untuk langsung ke menu | Permintaan tim; sebagian pekerjaan audio Tahap 6 maju lebih awal |
 | 14/11/2026 | Lagu menu diganti `music/menu.wav` (dari tim); `MenuScene` memutarnya berulang dengan fade in dan menghentikannya saat scene ditinggalkan. Lagu CC0 lama (`music/intro.ogg`) dihapus | Permintaan tim |
 | 14/11/2026 | Suara dipasang di gim (branch `feat/add-game-sounds`): `SoundBank` (Game) memuat SFX per nama dengan varian acak; menu (klik, hover), gameplay (musik, mulai, langkah, semprot, isi ulang, air habis, api menyala/menyebar/padam, pohon jadi sawit, peringatan 10 detik), layar hasil (menang/kalah), dan klik di intro. Level suara ada di `config::sound` (`GameConfig.h`). Suara satwa, sabotase, bintang, dan pause belum dipasang karena mekaniknya belum ada | Permintaan tim; bagian audio Tahap 6 |
+
+## Setup Linux lokal — 17/11/2026
+
+- `main` diperbarui ke `0431f95`.
+- Ditambahkan build CMake C++20 dan launcher `run.sh`; output di `build/linux/`, aset ikut disalin.
+- Loader PNG Linux memakai libpng sistem yang disetujui pengguna untuk setup ini; Windows tetap memakai WIC. SDL2/GLEW/OpenGL memakai paket sistem Linux yang sudah terpasang.
+- Verifikasi lokal Ubuntu 24.04: build Debug GCC 13.3/CMake 3.28 berhasil; intro tampil; menu → gameplay → hasil (F1) → menu → keluar (kode 0) berhasil. Diuji pada AMD Radeon/OpenGL 4.6. Semua 139 PNG aset berhasil dimuat; fixture 2×2 RGBA mempertahankan alpha dan urutan baris; file hilang/rusak menghasilkan error. Log runtime tidak memuat error aset/audio. Build Windows belum diuji pada sesi ini.
+
+## Pembaruan Iterasi 11 — 20/11/2026
+
+Patch dari `burn-the-wok-iteration-11.zip` diterapkan pada branch `feat/iteration-11-ui-audio-balancing` berbasis `main` `0431f95`, bersama perubahan setup Linux yang sudah ada. Pause/resume, rating 0–3 bintang, SFX satwa/musuh, dan resolver aset ditambahkan tanpa dependency baru. Resolver diimplementasikan di Engine agar header SDL tidak bocor ke Game; gambar, audio, dan narasi memakai urutan pencarian yang sama.
+
+Catatan fitur dan verifikasi paket asal ada di [catatan Iterasi 11](09-iteration-11-verification.md). Build Debug/Release Linux berhasil; 79 pemeriksaan integrasi lulus, termasuk pause 600 update pada setiap stage, retry/menu, rating, resolver aset, dan mixer. Aplikasi desktop diperbarui ke build Release Iterasi 11. Playtest manusia dan build Windows masih terbuka.

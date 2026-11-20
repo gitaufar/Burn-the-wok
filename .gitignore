@@ -23,3 +23,6 @@ Thumbs.db
 
 # Packaged builds (tools/package-release.ps1)
 /dist/
+
+# Linux CMake build output
+/build/

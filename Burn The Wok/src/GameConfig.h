@@ -67,6 +67,16 @@ constexpr const StageConfig& GetStage(StageId id) {
     return Stages[static_cast<int>(id)];
 }
 
+// Initial wildlife and antagonist tuning, awaiting human playtest.
+inline constexpr float RescueTriggerDistance = 28.0f;
+inline constexpr float AnimalFireDistance = 19.0f;
+inline constexpr float AnimalExposureSeconds = 2.0f;
+inline constexpr float AnimalSpeed = 46.0f;
+inline constexpr float SaboteurSpeed = 48.0f;
+inline constexpr float BossSpeed = 45.0f;
+inline constexpr float BossBlockDistance = 18.0f;
+inline constexpr float BossSlowMultiplier = 0.55f;
+
 // --- Water sprayer & tank (Stage 2) ---
 inline constexpr float TankCapacity = 100.0f;      // water units
 inline constexpr float SprayDropsPerSecond = 30.0f;

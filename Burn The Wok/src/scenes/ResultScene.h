@@ -31,6 +31,7 @@ public:
         config::StageId stage = config::StageId::FirstFire;
         int rescued = 0;
         int rescueTarget = 0;
+        int totalAnimals = 0;
     };
 
     explicit ResultScene(Outcome outcome) : ResultScene(outcome, Summary{}) {}
@@ -51,6 +52,8 @@ private:
     std::unique_ptr<SoundBank> m_sfx;
     std::unique_ptr<engine::Texture> m_tree, m_ranger;
     engine::Rect m_treeSource, m_rangerSource;
+    int m_stars = 0;
+    int m_revealedStars = 0;
     float m_time = 0.0f;
     int m_hovered = 0;
 };
