@@ -83,7 +83,7 @@ void Player::Update(const engine::Input& input, float dt, const ForestMap& map, 
     reach.h += config::RefillReach * 2.0f;
     m_refilling = !m_tank.IsFull() && map.HasTileInArea(reach, TileType::Water);
     if (m_refilling) {
-        m_tank.Refill(config::RefillPerSecond * dt);
+        m_tank.Refill(config::RefillPerSecond * m_refillScale * dt);
     }
 
     const float distance = (m_position - m_previousPosition).Length();

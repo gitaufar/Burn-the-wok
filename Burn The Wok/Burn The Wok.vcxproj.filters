@@ -136,4 +136,39 @@
     <None Include="assets\environment\.gitkeep" />
     <None Include="assets\characters\.gitkeep" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\art\FieldIcons.h">
+      <Filter>src\art</Filter>
+    </ClInclude>
+    <ClInclude Include="src\progress\Upgrades.h">
+      <Filter>src\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\progress\SaveData.h">
+      <Filter>src\systems</Filter>
+    </ClInclude>
+    <ClCompile Include="src\progress\SaveData.cpp">
+      <Filter>src\systems</Filter>
+    </ClCompile>
+    <ClInclude Include="src\systems\PointCalculator.h">
+      <Filter>src\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entities\Volunteer.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
+    <ClCompile Include="src\entities\Volunteer.cpp">
+      <Filter>src\entities</Filter>
+    </ClCompile>
+    <ClInclude Include="src\world\Navigation.h">
+      <Filter>src\world</Filter>
+    </ClInclude>
+    <ClCompile Include="src\world\Navigation.cpp">
+      <Filter>src\world</Filter>
+    </ClCompile>
+    <ClInclude Include="src\scenes\StoreScene.h">
+      <Filter>src\scenes</Filter>
+    </ClInclude>
+    <ClCompile Include="src\scenes\StoreScene.cpp">
+      <Filter>src\scenes</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>

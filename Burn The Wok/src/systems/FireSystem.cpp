@@ -110,7 +110,7 @@ int FireSystem::ResolveWaterHits(engine::EntityWorld& world) {
             if (!engine::Overlaps(drop.GetHitArea(), fire.GetHitArea())) return;
 
             drop.Destroy();
-            fire.ApplyWater(config::DropPower);
+            fire.ApplyWater(drop.GetPower());
             // A little steam where the water lands.
             if (unit(m_rng) > 0.3f) {
                 world.Spawn<Particle>(drop.GetPosition(), Particle::Settings{

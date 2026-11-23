@@ -13,6 +13,7 @@
 #include <engine/graphics/Texture.h>
 
 #include <memory>
+#include <vector>
 
 namespace game {
 
@@ -21,7 +22,7 @@ namespace game {
 // WASD/arrows = move, hold left mouse = spray toward the cursor, mouse wheel = zoom,
 // F1/F2 = jump to win/lose screen (debug), F3 = show hitboxes and solid tiles (debug),
 // F4 = set the tree under the cursor on fire (debug),
-// Esc = pause/resume.
+// Hold Space = calm nearby wildlife, Q = call campaign volunteers, Esc = pause.
 class GameplayScene : public engine::Scene {
 public:
     explicit GameplayScene(config::StageId stage = config::StageId::FirstFire);
@@ -42,6 +43,8 @@ private:
     void UpdatePause();
     void DrawPause();
     void SpawnActors();
+    void SpawnVolunteers(int count, float duty);
+    void DrawRescueHints(float alpha);
     // Sound effects and music, driven by what happened this update.
     void UpdateSound(float dt, bool trigger, int firesPutOut, const FireSystem::StepResult& step,
                      StageOutcome outcome);
@@ -75,6 +78,15 @@ private:
     int m_pauseSelection = 0;
     int m_firesPutOut = 0;
     int m_rescued = 0;
+    int m_wildlifePoints = 0;
+    int m_campaignTier = 0;
+    float m_campaignTime = 0;
+    float m_duty = 0;
+    float m_dutyTotal = 0;
+    bool m_called = false;
+    bool m_reportQueued = false;
+    struct RescuePopup { engine::Vec2 position; int points; float age; };
+    std::vector<RescuePopup> m_popups;
     int m_pendingAnimals = 0;
     bool m_rangerBlocked = false;
     engine::Vec2 m_aim{1.0f, 0.0f}; // last spray direction (for drawing)

@@ -15,6 +15,7 @@ add_library(Engine STATIC
     Engine/src/audio/Audio.cpp
     Engine/src/core/Application.cpp
     Engine/src/core/AssetPath.cpp
+    Engine/src/core/KeyValueFile.cpp
     Engine/src/core/Log.cpp
     Engine/src/core/SceneManager.cpp
     Engine/src/entity/EntityWorld.cpp
@@ -42,14 +43,18 @@ add_executable(burn-the-wok
     "${GAME_SOURCE_DIR}/entities/Particle.cpp"
     "${GAME_SOURCE_DIR}/entities/Player.cpp"
     "${GAME_SOURCE_DIR}/entities/StageActor.cpp"
+    "${GAME_SOURCE_DIR}/entities/Volunteer.cpp"
     "${GAME_SOURCE_DIR}/entities/WaterDrop.cpp"
+    "${GAME_SOURCE_DIR}/progress/SaveData.cpp"
     "${GAME_SOURCE_DIR}/systems/FireSystem.cpp"
     "${GAME_SOURCE_DIR}/systems/Sprayer.cpp"
     "${GAME_SOURCE_DIR}/scenes/GameplayScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/IntroScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/MenuScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/ResultScene.cpp"
+    "${GAME_SOURCE_DIR}/scenes/StoreScene.cpp"
     "${GAME_SOURCE_DIR}/world/ForestMap.cpp"
+    "${GAME_SOURCE_DIR}/world/Navigation.cpp"
 )
 target_include_directories(burn-the-wok PRIVATE "${GAME_SOURCE_DIR}")
 target_link_libraries(burn-the-wok PRIVATE Engine)

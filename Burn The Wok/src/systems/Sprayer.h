@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GameConfig.h"
+
 #include <engine/math/Vec2.h>
 
 #include <random>
@@ -17,7 +19,7 @@ class WaterTank;
 // small random angle so the stream looks like a spray instead of a laser.
 class Sprayer {
 public:
-    explicit Sprayer(unsigned seed) : m_rng(seed) {}
+    explicit Sprayer(unsigned seed, float power = config::DropPower) : m_rng(seed), m_power(power) {}
 
     // nozzle = world point the water leaves from; aim = normalized direction.
     void Update(float dt, bool triggerHeld, engine::Vec2 nozzle, engine::Vec2 aim,
@@ -28,6 +30,7 @@ public:
 
 private:
     std::mt19937 m_rng;
+    float m_power;
     float m_emitTimer = 0.0f; // seconds until the next drop
     bool m_spraying = false;
 };

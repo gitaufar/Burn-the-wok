@@ -250,6 +250,14 @@ void ForestMap::DrawGround(engine::SpriteBatch& batch, const engine::Texture& at
 
 }
 
+engine::Rect ForestMap::GetTreeSpriteRect(int x, int y, float aspect) const {
+    const float tile = static_cast<float>(config::TileSize);
+    const float variation = 0.94f + static_cast<float>((x * 13 + y * 7) % 5) * 0.03f;
+    const float height = config::TreeHeight * variation;
+    const float width = height * aspect;
+    return {x * tile + (tile - width) * 0.5f, (y + 1) * tile - height, width, height};
+}
+
 void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& treeTexture,
                           const engine::Rect& treeSource, const engine::Texture& sawitTexture,
                           const engine::Rect& sawitSource, const engine::Rect& visibleArea,
@@ -273,9 +281,6 @@ void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& tre
         for (int x = x0; x <= x1; ++x) {
             const TileType tile = GetTile(x, y);
             if (tile == TileType::Tree) {
-                const float variation = 0.94f + static_cast<float>((x * 13 + y * 7) % 5) * 0.03f;
-                const float height = config::TreeHeight * variation;
-                const float width = treeSource.w * height / treeSource.h;
                 // Scorched trees fade toward charcoal.
                 const engine::Color base = engine::Color::FromHex((x * 13 + y * 7) % 3 == 0 ? 0xDEE4CA : 0xF2EDDC);
                 const engine::Color charred = engine::Color::FromHex(0x5E4B42);
@@ -284,7 +289,7 @@ void ForestMap::DrawTrees(engine::SpriteBatch& batch, const engine::Texture& tre
                     return static_cast<std::uint8_t>(a + (b - a) * s);
                 };
                 batch.Draw(treeTexture,
-                           {x * ts + (ts - width) * 0.5f, rootY - height, width, height},
+                           GetTreeSpriteRect(x, y, treeSource.w / treeSource.h),
                            treeSource, {mix(base.r, charred.r), mix(base.g, charred.g), mix(base.b, charred.b), 255});
             } else if (tile == TileType::Sawit) {
                 // Planted in rows: identical palms, unlike the varied forest trees.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameConfig.h"
+#include "systems/PointCalculator.h"
 #include "audio/SoundBank.h"
 
 #include <engine/core/Scene.h>
@@ -32,6 +33,10 @@ public:
         int rescued = 0;
         int rescueTarget = 0;
         int totalAnimals = 0;
+        int wildlifePoints = 0;
+        float campaignTime = 0;
+        int stars = 0;
+        PointBreakdown points;
     };
 
     explicit ResultScene(Outcome outcome) : ResultScene(outcome, Summary{}) {}
@@ -52,10 +57,12 @@ private:
     std::unique_ptr<SoundBank> m_sfx;
     std::unique_ptr<engine::Texture> m_tree, m_ranger;
     engine::Rect m_treeSource, m_rangerSource;
-    int m_stars = 0;
-    int m_revealedStars = 0;
     float m_time = 0.0f;
     int m_hovered = 0;
+    bool m_saveFailed = false;
+    bool m_storeUnlocked = false;
+    bool m_recorded = false;
+    int m_balance = 0;
 };
 
 } // namespace game

@@ -10,7 +10,8 @@ namespace game {
 // purpose: the fire sits on a tree, so the water has to reach it.
 class WaterDrop : public engine::Entity {
 public:
-    WaterDrop(engine::Vec2 position, engine::Vec2 velocity, float lifetime);
+    WaterDrop(engine::Vec2 position, engine::Vec2 velocity, float lifetime, float power);
+    float GetPower() const { return m_power; }
 
     void Update(float dt) override;
     void Draw(engine::SpriteBatch& batch, float alpha) const override;
@@ -21,6 +22,7 @@ private:
     engine::Vec2 m_velocity;
     float m_age = 0.0f;
     float m_lifetime;
+    float m_power;
 };
 
 } // namespace game

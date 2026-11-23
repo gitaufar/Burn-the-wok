@@ -24,5 +24,9 @@ Thumbs.db
 # Packaged builds (tools/package-release.ps1)
 /dist/
 
+# Local game progress and interrupted save writes
+save.txt
+save.txt.tmp.*
+
 # Linux CMake build output
 /build/

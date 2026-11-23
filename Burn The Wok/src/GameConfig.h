@@ -52,15 +52,16 @@ struct StageConfig {
     int rescueTarget;
     std::array<ActorKind, 4> animals;
     int animalCount;
+    std::array<bool, 4> perchAnimals;
 };
 
 inline constexpr StageConfig Stages[] = {
     {"API PERTAMA", StageDuration, 3, 16.0f, SawitLoseFraction, 1,
-     {ActorKind::Orangutan, ActorKind::Orangutan}, 2},
+     {ActorKind::Orangutan, ActorKind::Orangutan}, 2, {false, true}},
     {"SABOTASE", 135.0f, 5, SpreadInterval, 0.12f, 2,
-     {ActorKind::Orangutan, ActorKind::Bekantan, ActorKind::Bekantan}, 3},
+     {ActorKind::Orangutan, ActorKind::Bekantan, ActorKind::Bekantan}, 3, {true, false, true}},
     {"HUTAN TERAKHIR", 115.0f, InitialFireCount, 9.0f, 0.10f, 3,
-     {ActorKind::Orangutan, ActorKind::Bekantan, ActorKind::Owl, ActorKind::Owl}, 4},
+     {ActorKind::Orangutan, ActorKind::Bekantan, ActorKind::Owl, ActorKind::Owl}, 4, {false, false, true, true}},
 };
 
 constexpr const StageConfig& GetStage(StageId id) {

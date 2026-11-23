@@ -15,7 +15,15 @@ inline const unsigned char* PunctuationRows(char ch) {
     static constexpr unsigned char quote[7] = {10, 10, 0, 0, 0, 0, 0};
     static constexpr unsigned char open[7] = {2, 4, 8, 8, 8, 4, 2};
     static constexpr unsigned char close[7] = {8, 4, 2, 2, 2, 4, 8};
+    static constexpr unsigned char plus[7] = {0,4,4,31,4,4,0};
+    static constexpr unsigned char leftBracket[7] = {14,8,8,8,8,8,14};
+    static constexpr unsigned char rightBracket[7] = {14,2,2,2,2,2,14};
+    static constexpr unsigned char hash[7] = {10,10,31,10,31,10,10};
     switch (ch) {
+    case '+': return plus;
+    case '[': return leftBracket;
+    case ']': return rightBracket;
+    case '#': return hash;
     case ',': return comma;
     case '?': return question;
     case '!': return exclaim;

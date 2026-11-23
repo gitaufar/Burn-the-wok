@@ -8,8 +8,8 @@ namespace game {
 
 using engine::Color;
 
-WaterDrop::WaterDrop(engine::Vec2 position, engine::Vec2 velocity, float lifetime)
-    : engine::Entity(position), m_velocity(velocity), m_lifetime(lifetime) {}
+WaterDrop::WaterDrop(engine::Vec2 position, engine::Vec2 velocity, float lifetime, float power)
+    : engine::Entity(position), m_velocity(velocity), m_lifetime(lifetime), m_power(power) {}
 
 void WaterDrop::Update(float dt) {
     m_position += m_velocity * dt;

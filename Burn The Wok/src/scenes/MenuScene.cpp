@@ -1,4 +1,7 @@
 #include "scenes/MenuScene.h"
+#include "scenes/StoreScene.h"
+#include "progress/SaveData.h"
+#include "art/FieldIcons.h"
 
 #include "GameConfig.h"
 #include "art/PixelText.h"
@@ -27,10 +30,10 @@ float MenuScale(engine::Vec2 size) {
     return std::max(0.01f, std::min(size.x / 1280.0f, size.y / 720.0f));
 }
 
-engine::Rect StartButton(engine::Vec2 size) {
+engine::Rect MenuButton(engine::Vec2 size, int index) {
+    const auto c = size * 0.5f;
     const float s = MenuScale(size);
-    return {size.x * 0.5f + 90.0f * s, size.y * 0.5f + 142.0f * s,
-            350.0f * s, 72.0f * s};
+    return {c.x+90*s, c.y+(126+index*37)*s, 350*s, 32*s};
 }
 
 void DrawForestTree(engine::SpriteBatch& batch, float x, float ground, float height,
@@ -65,7 +68,7 @@ void MenuScene::OnEnter() {
     m_glow = std::make_unique<engine::Texture>(glow);
 
     App().GetWindow().SetTitle(std::string(config::WindowTitle) +
-                               " - Menu | Enter/Spasi atau klik MULAI, Esc: keluar");
+                               " - Menu | Panah dan Enter, Esc: keluar");
     App().GetWindow().SetClearColor(Color::FromHex(0x071411));
 
     // Menu music loops until the scene is left; it fades in so it follows the intro's fade-out smoothly.
@@ -77,7 +80,7 @@ void MenuScene::OnEnter() {
     }
 
     m_sfx = std::make_unique<SoundBank>(App().GetAudio());
-    m_sfx->Load({"ui_click", "ui_hover"});
+    m_sfx->Load({"ui_click", "ui_hover", "purchase_fail"});
 }
 
 void MenuScene::OnExit() {
@@ -88,18 +91,54 @@ void MenuScene::Update(float dt) {
     m_time += dt;
     App().GetAudio().SetVoiceVolume(m_voice, config::sound::MenuMusic * std::clamp(m_time / 1.5f, 0.0f, 1.0f));
     const engine::Input& input = App().GetInput();
-    const bool clickStart = input.IsMousePressed(engine::MouseButton::Left) &&
-                            StartButton(App().GetWindow().GetSize()).Contains(input.GetMousePosition());
-    const bool overStart = StartButton(App().GetWindow().GetSize()).Contains(input.GetMousePosition());
-    if (overStart && !m_hovered) m_sfx->Play("ui_hover", config::sound::UiHover);
-    m_hovered = overStart;
+    const auto size = App().GetWindow().GetSize();
+    const int count = m_page == Page::Reset ? 2 : m_page == Page::Stages ? 3 : 4;
+    int hovered = -1;
+    for (int i = 0; i < count; ++i)
+        if (MenuButton(size, i).Contains(input.GetMousePosition())) hovered = i;
+    const int previousFocus = m_focus;
+    if (input.IsKeyPressed(Key::Up)) m_focus = (m_focus+count-1)%count;
+    if (input.IsKeyPressed(Key::Down)) m_focus = (m_focus+1)%count;
+    if ((hovered >= 0 && hovered != m_hovered) || previousFocus != m_focus)
+        m_sfx->Play("ui_hover", config::sound::UiHover);
+    m_hovered = hovered;
 
-    if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) ||
-        input.IsKeyPressed(Key::Space) || clickStart) {
-        m_sfx->Play("ui_click", config::sound::UiClick);
-        App().GetScenes().SwitchTo(std::make_unique<GameplayScene>());
-    } else if (input.IsKeyPressed(Key::Escape)) {
-        App().Quit();
+    if (input.IsKeyPressed(Key::Escape)) {
+        if (m_page == Page::Main) App().Quit();
+        else { m_page = Page::Main; m_focus = 0; m_resetFailed = false; }
+    } else if (hovered >= 0 && input.IsMousePressed(engine::MouseButton::Left)) {
+        Select(hovered);
+    } else if (input.IsKeyPressed(Key::Enter) || input.IsKeyPressed(Key::NumpadEnter) ||
+               input.IsKeyPressed(Key::Space)) {
+        Select(m_focus);
+    }
+}
+
+void MenuScene::Select(int index) {
+    auto& save = SaveData::Current();
+    if ((m_page == Page::Stages && index > save.unlocked) ||
+        (m_page == Page::Main && index == 2 && !save.cleared[0])) {
+        m_sfx->Play("purchase_fail", 0.5f);
+        return;
+    }
+    m_sfx->Play("ui_click", config::sound::UiClick);
+    if (m_page == Page::Reset) {
+        if (index == 1 && !save.Commit(SaveData{})) {
+            m_resetFailed = true;
+            m_sfx->Play("purchase_fail", 0.5f);
+            return;
+        }
+        m_page = Page::Main;
+        m_focus = 0;
+        m_resetFailed = false;
+    } else if (m_page == Page::Stages || index == 0) {
+        const int stage = m_page == Page::Stages ? index : save.unlocked;
+        App().GetScenes().SwitchTo(std::make_unique<GameplayScene>(static_cast<config::StageId>(stage)));
+    } else if (index == 2) {
+        App().GetScenes().SwitchTo(std::make_unique<StoreScene>());
+    } else {
+        m_page = index == 1 ? Page::Stages : Page::Reset;
+        m_focus = 0;
     }
 }
 
@@ -197,27 +236,55 @@ void MenuScene::Draw(float /*alpha*/) {
     key("WASD", -422, 175, 58);
     label("GERAK", -346, 180, 2, ink);
     label("ATAU TOMBOL PANAH", -346, 201, 1, ink);
-    key("SCROLL", -422, 220, 82);
-    label("ZOOM TAMPILAN", -324, 225, 2, ink);
+    key("SPASI", -422, 220, 72);
+    label("TAHAN / TOLONG SATWA", -338, 225, 1.6f, ink);
 
-    const engine::Rect button = StartButton(size);
-    const bool hovered = button.Contains(App().GetInput().GetMousePosition());
-    label("HUTAN MENUNGGUMU", 90, 116, 2, shade);
-    batch.DrawRect({button.x, button.y+5*s, button.w, button.h}, Color::FromHex(0x071411));
-    batch.DrawRect(button, hovered ? cream : paper);
-    batch.DrawRect({button.x, button.y, 6*s, button.h}, moss);
-    label("MULAI JELAJAH", 113, 168, 3, ink);
-    // Pixel trail arrow on the far end of the paper tab.
-    rect(400, 175, 22, 4, ink);
-    for (int i=0; i<4; ++i)
-        rect(416+i*3.0f, 166+i*3.0f, 3, 22-i*6.0f, ink);
-    label("ENTER - SPASI", 90, 232, 2, hovered ? cream : shade);
+    const auto& save = SaveData::Current();
+    const bool chooseStage = m_page == Page::Stages;
+    const bool reset = m_page == Page::Reset;
+    const int count = reset ? 2 : chooseStage ? 3 : 4;
+    label(reset ? "HAPUS SELURUH PROGRES?" : chooseStage ? "PILIH WILAYAH PATROLI" :
+          "ENTER PILIH / PANAH ATAS BAWAH", 90, 105, 1.5f, shade);
+    const bool started = save.cleared[0] || save.points > 0;
+    const std::string actions[] = {started ? "LANJUTKAN / STAGE " + std::to_string(save.unlocked+1) : "MULAI JELAJAH",
+        "PILIH STAGE", "TOKO PERLENGKAPAN", "RESET PROGRES"};
+    for (int i = 0; i < count; ++i) {
+        const auto button = MenuButton(size, i);
+        const float y = 126+i*37.0f;
+        const bool locked = chooseStage ? i > save.unlocked : !reset && i == 2 && !save.cleared[0];
+        const bool focused = i == m_focus || i == m_hovered;
+        const Color front = locked ? Color::FromHex(0x5E5E4B) : ink;
+        rect(93, y+4, 350, 32, Color::FromHex(0x071411));
+        batch.DrawRect(button, focused ? cream : locked ? shade : paper);
+        rect(90, y, 5, 32, focused ? moss : shade);
+        const std::string title = reset ? (i == 0 ? "BATAL" : "YA / RESET PROGRES") :
+            chooseStage ? std::to_string(i+1) + " / " + config::Stages[i].name : actions[i];
+        label(title, 107, y+9, 2, front);
+        const auto icon = [&](art::FieldIcon glyph, float x, Color color) {
+            art::DrawFieldIcon(batch, glyph, c.x+x*s, c.y+(y+9)*s, 1.65f*s, color);
+        };
+        if (locked) {
+            icon(art::FieldIcon::Lock, 412, front);
+        } else if (chooseStage) {
+            for (int n = 0; n < 3; ++n) icon(art::FieldIcon::Star, 378+n*16.0f,
+                n < save.stars[i] ? Color::FromHex(0x996423) : shade);
+        } else if (!reset && i == 2 && save.storeNew && std::fmod(m_time, 0.95f) < 0.64f) {
+            label("BARU!", 373, y+10, 2, Color::FromHex(0x8D382A));
+        }
+    }
+    if (reset) label(m_resetFailed ? "GAGAL MENYIMPAN RESET" : "SALDO, STAGE, DAN PERLENGKAPAN DIHAPUS.",
+                     90, 208, 1.4f, shade);
 
     rect(-578, 287, 1156, 1, Color::FromHex(0xC7B58A, 55));
-    label("JAGA HUTAN - PADAMKAN API", -578, 310, 2, shade);
+    art::DrawFieldIcon(batch, art::FieldIcon::Leaf, c.x-578*s, c.y+308*s, 2*s, Color::FromHex(0xE9BE70));
+    label("SALDO " + std::to_string(save.points), -553, 310, 2, cream);
+    if (save.campaignSeconds > 0) {
+        art::DrawFieldIcon(batch, art::FieldIcon::Megaphone, c.x-332*s, c.y+308*s, 2*s, Color::FromHex(0xE9BE70));
+        label("KAMPANYE AKTIF " + CampaignClock(save.campaignSeconds), -303, 310, 2, shade);
+    }
     rect(422, 303, 46, 25, Color::FromHex(0x3B4031));
     label("ESC", 428, 309, 2, cream);
-    label("KELUAR", 484, 309, 2, shade);
+    label(m_page == Page::Main ? "KELUAR" : "KEMBALI", 484, 309, 2, shade);
     batch.End();
 }
 
