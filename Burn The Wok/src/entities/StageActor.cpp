@@ -146,8 +146,8 @@ void StageActor::StepAnimal(float dt, const ForestMap& map, const engine::Entity
     world.ForEach<Fire>([&](const Fire& fire) {
         nearestFire = std::min(nearestFire, (fire.GetHitArea().center - fireAnchor).Length());
     });
-    m_exposure = nearestFire < 19.0f ? m_exposure + dt : 0.0f;
-    if (m_exposure >= 2.0f) {
+    m_exposure = nearestFire < config::AnimalFireDistance ? m_exposure + dt : 0.0f;
+    if (m_exposure >= config::AnimalExposureSeconds) {
         m_rescue = Rescue::Burned;
         return;
     }
@@ -166,7 +166,7 @@ void StageActor::StepAnimal(float dt, const ForestMap& map, const engine::Entity
         m_route = FindRoute(map, ToCell(m_position), [&](Cell cell) { return cell == shelter; });
         m_routeRevision = map.GetRevision();
     }
-    FollowRoute(46.0f, dt, map);
+    FollowRoute(config::AnimalSpeed, dt, map);
     if ((CellCenter(shelter) - m_position).LengthSquared() < 0.001f) m_rescue = Rescue::Saved;
 }
 
@@ -199,7 +199,7 @@ void StageActor::StepSaboteur(float dt, ForestMap& map, engine::EntityWorld& wor
             return;
         }
     }
-    FollowRoute(48.0f, dt, map);
+    FollowRoute(config::SaboteurSpeed, dt, map);
     if (!m_route.empty()) return;
 
     Cell target{};
@@ -238,8 +238,8 @@ void StageActor::StepBoss(float dt, const ForestMap& map, Vec2 ranger) {
         m_routeRevision = map.GetRevision();
         m_actionTimer = 0.65f;
     }
-    if (m_route.empty()) MoveToward(ranger, 45.0f, dt, map);
-    else FollowRoute(45.0f, dt, map);
+    if (m_route.empty()) MoveToward(ranger, config::BossSpeed, dt, map);
+    else FollowRoute(config::BossSpeed, dt, map);
 }
 
 void StageActor::Step(float dt, ForestMap& map, engine::EntityWorld& world, FireSystem& fires,

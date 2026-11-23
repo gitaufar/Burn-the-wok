@@ -3,7 +3,11 @@
 #include <atomic>
 #include <fstream>
 #include <utility>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 namespace engine {
 bool KeyValueFile::Read(const std::filesystem::path& path, Values& values) {
@@ -29,15 +33,27 @@ bool KeyValueFile::Write(const std::filesystem::path& path, const Values& values
     }
     static std::atomic<unsigned> sequence{0};
     auto temporary = path;
-    temporary += L".tmp." + std::to_wstring(GetCurrentProcessId()) + L"." +
-                 std::to_wstring(sequence.fetch_add(1, std::memory_order_relaxed));
+#ifdef _WIN32
+    const auto process = GetCurrentProcessId();
+#else
+    const auto process = getpid();
+#endif
+    temporary += ".tmp." + std::to_string(process) + "." +
+                 std::to_string(sequence.fetch_add(1, std::memory_order_relaxed));
     std::ofstream stream(temporary, std::ios::trunc);
     if (!stream) return false;
     for (const auto& [key, value] : values) stream << key << '=' << value << '\n';
     stream.close();
-    if (stream && MoveFileExW(temporary.c_str(), path.c_str(),
-                              MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return true;
     std::error_code error;
+    if (stream) {
+#ifdef _WIN32
+        if (MoveFileExW(temporary.c_str(), path.c_str(),
+                        MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return true;
+#else
+        std::filesystem::rename(temporary, path, error);
+        if (!error) return true;
+#endif
+    }
     std::filesystem::remove(temporary, error);
     return false;
 }

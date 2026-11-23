@@ -40,6 +40,8 @@ private:
     // Water bursting out of the spray gun's nozzle (the gun itself is part of the ranger sprite).
     void DrawWaterBurst(float alpha);
     void RebuildMinimap();
+    void UpdatePause();
+    void DrawPause();
     void SpawnActors();
     void SpawnVolunteers(int count, float duty);
     void DrawRescueHints(float alpha);
@@ -72,6 +74,8 @@ private:
     std::unique_ptr<FireSystem> m_fireSystem; // created in OnEnter (needs the atlas)
     Sprayer m_sprayer;
     StageRules m_rules; // after m_map: counts the map's trees when constructed
+    bool m_paused = false;
+    int m_pauseSelection = 0;
     int m_firesPutOut = 0;
     int m_rescued = 0;
     int m_wildlifePoints = 0;
@@ -80,9 +84,7 @@ private:
     float m_duty = 0;
     float m_dutyTotal = 0;
     bool m_called = false;
-    bool m_paused = false;
     bool m_reportQueued = false;
-    int m_pauseChoice = 0;
     struct RescuePopup { engine::Vec2 position; int points; float age; };
     std::vector<RescuePopup> m_popups;
     int m_pendingAnimals = 0;

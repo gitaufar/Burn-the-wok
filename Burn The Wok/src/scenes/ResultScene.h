@@ -32,6 +32,7 @@ public:
         config::StageId stage = config::StageId::FirstFire;
         int rescued = 0;
         int rescueTarget = 0;
+        int totalAnimals = 0;
         int wildlifePoints = 0;
         float campaignTime = 0;
         int stars = 0;

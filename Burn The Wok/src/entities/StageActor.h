@@ -38,13 +38,14 @@ public:
               engine::Vec2 ranger, const engine::Rect& rangerFeet, bool calm);
     bool IsAnimal() const { return m_kind <= Kind::Owl; }
     bool BlocksRanger() const { return m_kind == Kind::Wowo || m_kind == Kind::Tedduy; }
+    Kind GetKind() const { return m_kind; }
+    int GetIgnitionsLeft() const { return m_ignitionsLeft; }
     bool IsPlanting() const { return m_planting; }
     Rescue GetRescue() const { return m_rescue; }
     engine::Rect GetFeet() const;
     bool CanCalm() const;
-    Kind GetKind() const { return m_kind; }
     float CalmProgress() const { return m_calmTime / CalmSeconds; }
-    static constexpr float CalmRange = 28.0f;
+    static constexpr float CalmRange = config::RescueTriggerDistance;
 
 private:
     bool MoveToward(engine::Vec2 target, float speed, float dt, const ForestMap& map);

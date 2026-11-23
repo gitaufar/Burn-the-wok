@@ -5,10 +5,13 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
 #include <vector>
+#ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#endif
 
 namespace game {
 namespace {
@@ -17,12 +20,25 @@ namespace fs = std::filesystem;
 
 std::vector<fs::path> Paths() {
     std::vector<fs::path> paths;
+#ifdef _WIN32
     wchar_t executable[32768];
     const DWORD count = GetModuleFileNameW(nullptr, executable, 32768);
     if (count && count < 32768) paths.push_back(fs::path(executable).parent_path() / "save.txt");
     wchar_t appData[32768];
     const DWORD appDataCount = GetEnvironmentVariableW(L"APPDATA", appData, 32768);
     if (appDataCount && appDataCount < 32768) paths.push_back(fs::path(appData) / "BurnTheWo" / "save.txt");
+#else
+    std::error_code error;
+    const auto executable = fs::read_symlink("/proc/self/exe", error);
+    if (!error) paths.push_back(executable.parent_path() / "save.txt");
+    const auto* dataHome = std::getenv("XDG_DATA_HOME");
+    const auto* home = std::getenv("HOME");
+    if (dataHome && fs::path(dataHome).is_absolute()) {
+        paths.push_back(fs::path(dataHome) / "BurnTheWo" / "save.txt");
+    } else if (home && *home) {
+        paths.push_back(fs::path(home) / ".local" / "share" / "BurnTheWo" / "save.txt");
+    }
+#endif
     return paths;
 }
 
@@ -34,6 +50,7 @@ SaveData Load() {
     fs::file_time_type latestTime{};
     for (const auto& path : Paths()) {
         std::error_code error;
+        if (!fs::is_regular_file(path, error)) continue;
         const auto written = fs::last_write_time(path, error);
         if (!error && (latest.empty() || written > latestTime)) {
             latest = path;

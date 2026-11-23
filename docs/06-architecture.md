@@ -59,7 +59,7 @@ Diverifikasi 06/11/2026: kedua konfigurasi sukses, 0 warning.
 - IDE: F5 (debug) / Ctrl+F5. Working directory saat debug = folder `Burn The Wok/` (penting untuk path aset nanti).
 - Manual: `Debug\Burn The Wok.exe` atau `Release\Burn The Wok.exe` (relatif ke root repo). `SDL2.dll` dan `glew32.dll` otomatis disalin ke folder itu saat build (target `CopyEngineRuntimeDlls` di `Engine/Engine.props`).
 - Tujuan: padamkan semua api sebelum waktu habis; kalah jika sawit mencapai batas atau waktu habis saat api masih menyala.
-- Kontrol: Enter/Spasi = mulai, WASD/panah = gerak, **tahan klik kiri = semprot air ke arah kursor**, berdiri di tepi kolam = isi ulang air, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), F3 = tampilkan hitbox & tile padat (debug), F4 = bakar pohon di bawah kursor (debug), Esc = kembali ke menu / keluar dari menu.
+- Kontrol: Enter/Spasi = mulai, WASD/panah = gerak, **tahan klik kiri = semprot air ke arah kursor**, berdiri di tepi kolam = isi ulang air, roda mouse = zoom, F1/F2 = layar menang/kalah (debug), F3 = tampilkan hitbox & tile padat (debug), F4 = bakar pohon di bawah kursor (debug), Esc = pause/resume saat gameplay; panel pause menyediakan kembali ke menu; Esc keluar dari menu.
 
 ## Dependency yang disetujui
 
@@ -227,3 +227,19 @@ Application loop ───┤
 - 09/11/2026 — Collision tile: pohon & air padat, hitbox pemain hanya kaki (10×6 px di bawah titik tengah sprite). Tile di luar peta dihitung pohon, jadi tepi peta otomatis padat (clamp ke batas peta dihapus).
 
 _(Tambahkan di sini seiring pengembangan. Salin ringkasannya ke laporan bab arsitektur.)_
+
+## Build Linux lokal (17/11/2026)
+
+Linux memakai CMake + GCC C++20, library sistem SDL2 2.30.0, GLEW 2.2.0, dan OpenGL. Windows tetap memakai MSBuild dan binary vendor di `External/`. Petunjuk: [Setup lokal Linux](09-linux-setup.md).
+
+### Tambahan dependency yang disetujui untuk Linux
+
+| Library | Versi lokal | Fungsi | Persetujuan |
+|---|---|---|---|
+| libpng | 1.6.43 | Decode PNG ke RGBA8 pada Linux; Windows tetap memakai Windows Imaging Component | Pengguna menyetujui setup Linux dengan libpng, 17/11/2026; bukan konfirmasi dosen |
+
+libpng memakai zlib sistem (transitif). Tidak menambah engine/framework; game loop, renderer, collision, input, dan mixer tetap kode tim.
+
+## Integrasi Iterasi 11 (20/11/2026)
+
+`ResolveAssetPath` dideklarasikan di header publik Engine tanpa SDL, dengan implementasi dan header SDL privat di `Engine/src/core/AssetPath.cpp`. PNG, audio, varian SFX, dan narasi memprioritaskan aset dekat executable lalu fallback working directory. Pause berada pada GameplayScene dan menghentikan update simulasi; mixer membekukan loop melalui `AudioSystem::SetPaused`, sementara one-shot UI tetap berjalan. Rating dihitung di Game (`systems/StarRating.h`). Tidak ada dependency baru. Hasil uji lokal: [verifikasi Iterasi 11](09-iteration-11-verification.md).

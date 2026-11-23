@@ -4,6 +4,7 @@
 #include "progress/SaveData.h"
 #include "art/FieldIcons.h"
 #include <limits>
+#include "systems/StarRating.h"
 #include "art/PixelText.h"
 #include "scenes/MenuScene.h"
 #include "scenes/GameplayScene.h"
@@ -55,7 +56,7 @@ void ResultScene::OnEnter() {
         auto next = save;
         const int stage = static_cast<int>(m_summary.stage);
         const bool won = m_outcome == Outcome::Win;
-        m_summary.stars = StarRating(won, m_summary.forestPercent, m_summary.rescued, m_summary.rescueTarget);
+        m_summary.stars = CalculateStars(won, m_summary.forestPercent, m_summary.rescued, m_summary.totalAnimals);
         m_summary.points = CalculatePoints(m_summary.stage, won, save.cleared[stage], m_summary.rescued,
             m_summary.wildlifePoints, m_summary.stars, m_summary.secondsLeft);
         next.points += std::min(m_summary.points.Total(), std::numeric_limits<int>::max() - next.points);
@@ -201,7 +202,7 @@ void ResultScene::Draw(float /*alpha*/) {
         text("POIN PATROLI", 265, 274, 1.5f, cream);
         text("SALDO " + std::to_string(m_balance), 265, 307, 1, cream);
         text(m_saveFailed ? "GAGAL MENYIMPAN PROGRES" : m_storeUnlocked ? "TOKO PERLENGKAPAN TERBUKA" :
-             "SATWA TIBA " + std::to_string(m_summary.rescued) + "/" + std::to_string(m_summary.rescueTarget), 32, 552, 2, cream);
+             "SATWA TIBA " + std::to_string(m_summary.rescued) + "/" + std::to_string(m_summary.totalAnimals), 32, 552, 2, cream);
     }
     rect(32, 28, 33, 35, Color::FromHex(0x8E9C6D));
     rect(46, 36, 5, 22, cream); rect(39, 42, 19, 5, cream); rect(42, 37, 13, 5, cream);

@@ -45,7 +45,7 @@
   <PropertyGroup Label="UserMacros" />
   <!-- Engine-only include paths. SDL and GLEW headers are visible to the Engine, never to the Game. -->
   <PropertyGroup>
-    <EngineIncludeDirs>$(ProjectDir)include;$(ProjectDir)..\External\SDL\include;$(ProjectDir)..\External\GLEW\include</EngineIncludeDirs>
+    <EngineIncludeDirs>$(ProjectDir)include;$(ProjectDir)..\External\SDL\include\SDL;$(ProjectDir)..\External\GLEW\include</EngineIncludeDirs>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -74,6 +74,7 @@
   <ItemGroup>
     <ClInclude Include="include\engine\audio\Audio.h" />
     <ClInclude Include="include\engine\core\Application.h" />
+    <ClInclude Include="include\engine\core\AssetPath.h" />
     <ClInclude Include="include\engine\core\Log.h" />
     <ClInclude Include="include\engine\core\Scene.h" />
     <ClInclude Include="include\engine\core\SceneManager.h" />
@@ -97,6 +98,7 @@
   <ItemGroup>
     <ClCompile Include="src\audio\Audio.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
+    <ClCompile Include="src\core\AssetPath.cpp" />
     <ClCompile Include="src\core\Log.cpp" />
     <ClCompile Include="src\core\SceneManager.cpp" />
     <ClCompile Include="src\entity\EntityWorld.cpp" />

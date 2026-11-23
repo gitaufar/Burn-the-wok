@@ -39,8 +39,8 @@ void Volunteer::Step(float dt, const ForestMap& map, engine::EntityWorld& world)
     const Cell here = ToCell(m_position);
     float speedScale = 1;
     static_cast<const engine::EntityWorld&>(world).ForEach<StageActor>([&](const StageActor& actor) {
-        if (actor.BlocksRanger() && (actor.GetPosition() - m_position).LengthSquared() < 18*18)
-            speedScale = 0.55f;
+        if (actor.BlocksRanger() && (actor.GetPosition() - m_position).LengthSquared() < config::BossBlockDistance * config::BossBlockDistance)
+            speedScale = config::BossSlowMultiplier;
     });
     if (m_temporary) {
         if (m_duty > 0) {

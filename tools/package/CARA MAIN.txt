@@ -20,7 +20,7 @@ KONTROL
   Klik kiri (tahan): semprot air ke arah kursor mouse
   Isi ulang air   : berdiri di tepi kolam
   Roda mouse      : zoom
-  Esc             : kembali ke menu / keluar dari menu
+  Esc             : pause / lanjutkan saat bermain; keluar dari menu
   F1 / F2         : (sementara, untuk uji) langsung ke layar menang / kalah
   F4              : (sementara, untuk uji) bakar pohon di bawah kursor mouse
 
@@ -34,3 +34,12 @@ JIKA ADA MASALAH
   - "OpenGL 3.3 context creation failed": update driver kartu grafis.
 
 Folder "licenses" berisi lisensi library pihak ke-3 (SDL2, GLEW) yang dipakai engine.
+
+
+PENYELAMATAN DAN PENILAIAN
+Dekati satwa agar bergerak ke zona aman di tengah peta.
+Menang jika semua api padam dan target satwa tercapai sebelum waktu habis.
+1 bintang: stage berhasil.
+2 bintang: hutan minimal 85% dan minimal 75% dari seluruh satwa selamat.
+3 bintang: hutan minimal 95% dan seluruh satwa selamat.
+Menu pause mendukung panah/W/S dan Enter, serta klik mouse.

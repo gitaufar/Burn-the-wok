@@ -1,6 +1,6 @@
 #include "engine/input/Input.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include <algorithm>
 

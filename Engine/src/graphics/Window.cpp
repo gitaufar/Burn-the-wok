@@ -3,7 +3,7 @@
 #include "engine/core/Log.h"
 #include "GL.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include <stdexcept>
 #include <cmath>

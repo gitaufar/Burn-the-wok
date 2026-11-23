@@ -1,4 +1,5 @@
 #include "scenes/IntroScene.h"
+#include <engine/core/AssetPath.h>
 
 #include "GameConfig.h"
 #include "art/PixelText.h"
@@ -146,7 +147,7 @@ engine::Camera2D ScreenCamera(Vec2 size) {
 } // namespace
 
 void IntroScene::LoadScript(const std::string& path) {
-    std::ifstream file(path);
+    std::ifstream file(engine::ResolveAssetPath(path));
     if (!file) {
         throw std::runtime_error("cannot open " + path);
     }

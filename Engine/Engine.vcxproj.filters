@@ -160,6 +160,8 @@
     <None Include="Engine.props" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\engine\core\AssetPath.h"><Filter>include\engine\core</Filter></ClInclude>
+    <ClCompile Include="src\core\AssetPath.cpp"><Filter>src\core</Filter></ClCompile>
     <ClInclude Include="include\engine\core\KeyValueFile.h"><Filter>include\engine\core</Filter></ClInclude>
     <ClCompile Include="src\core\KeyValueFile.cpp"><Filter>src\core</Filter></ClCompile>
   </ItemGroup>
