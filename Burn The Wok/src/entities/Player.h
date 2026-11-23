@@ -27,7 +27,8 @@ enum class Facing { Down, Up, Left, Right };
 // edge of a pond refills the tank; the spraying itself is done by Sprayer.
 class Player {
 public:
-    explicit Player(engine::Vec2 position) : m_position(position), m_previousPosition(position) {}
+    explicit Player(engine::Vec2 position, float capacity = config::TankCapacity, float refillScale = 1.0f)
+        : m_position(position), m_previousPosition(position), m_tank(capacity), m_refillScale(refillScale) {}
     // Call after the graphics context is ready.
     void LoadArtwork();
 
@@ -89,6 +90,7 @@ private:
     bool m_moving = false;
     bool m_aiming = false; // Aim() was called since the last Update()
     WaterTank m_tank{config::TankCapacity};
+    float m_refillScale;
     bool m_refilling = false;
 };
 

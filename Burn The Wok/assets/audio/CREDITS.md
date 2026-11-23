@@ -58,3 +58,11 @@ File-file ini berasal dari unduhan/rekaman tim. Isi kolom sumber dan lisensi seb
 | `music/gameplay.wav` | dziiten-adventures-loop-music-226836.mp3 | Dari tim; musik gameplay (loop 27 dtk), file sumber sama dengan `music/menu.wav`. Menggantikan `music/gameplay.ogg` (file tim sebelumnya). Nama file berpola Pixabay, cek lisensinya. Dikonversi ke WAV, volume dinormalisasi. |
 | `music/sad_intro.wav` | sad intro.mp3 | Dari tim; lagu intro. Dikonversi ke WAV (OGG belum bisa diputar). Sumber dan lisensi belum dicatat. |
 | `music/menu.wav` | dziiten-adventures-loop-music-226836.mp3 | Dari tim; lagu menu (loop 27 dtk). Menggantikan `music/intro.ogg` (Tropical Loop, CC0). Nama file berpola Pixabay, cek lisensinya. Dikonversi ke WAV, volume dinormalisasi karena aslinya sangat pelan. |
+
+### SFX progres, toko, rescue, dan relawan
+
+`points_gain`, `purchase_ok`, `purchase_fail`, `upgrade_level`, `rescue_calm`,
+`store_unlock`, `volunteer_join`, `campaign_launch`, `volunteer_call`, dan
+`volunteer_leave` adalah bunyi orisinal yang disintesis dari gelombang sinus
+untuk proyek ini dengan bantuan Codex. Tidak ada sampel dari pihak ketiga.
+Rilis mengikuti lisensi aset proyek.

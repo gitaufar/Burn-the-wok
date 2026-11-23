@@ -165,4 +165,17 @@
   </Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ItemGroup>
+    <ClInclude Include="src\art\FieldIcons.h" />
+    <ClInclude Include="src\progress\Upgrades.h" />
+    <ClInclude Include="src\progress\SaveData.h" />
+    <ClCompile Include="src\progress\SaveData.cpp" />
+    <ClInclude Include="src\systems\PointCalculator.h" />
+    <ClInclude Include="src\entities\Volunteer.h" />
+    <ClCompile Include="src\entities\Volunteer.cpp" />
+    <ClInclude Include="src\world\Navigation.h" />
+    <ClCompile Include="src\world\Navigation.cpp" />
+    <ClInclude Include="src\scenes\StoreScene.h" />
+    <ClCompile Include="src\scenes\StoreScene.cpp" />
+  </ItemGroup>
 </Project>

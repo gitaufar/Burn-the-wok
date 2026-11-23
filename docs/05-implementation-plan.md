@@ -181,6 +181,16 @@ Sudah terjawab 06/11/2026 (lihat Log Keputusan): windowing (SDL2 + GLEW), lokasi
 
 ## Log Keputusan
 
+### 23/11/2026 - Poin, suplai, dan bantuan patroli
+
+- Implementasi mencakup simpan progres, poin, toko, rescue, relawan tetap, dan kampanye lokal/nasional.
+- Rescue memakai opsi B. Satwa harus dibantu dengan tahan Spasi 0,8 detik sebelum menuju pos aman.
+- Poin saat kalah adalah 50% dari nilai satwa yang sudah tiba di pos (dibulatkan ke bawah). Pengulangan membagi dua komponen poin menang.
+- Kemenangan memberi 1 bintang dasar, 1 tambahan bila hutan tersisa minimal 90%, dan 1 bila semua satwa selamat.
+- Kampanye berjalan selama patroli tanpa jeda. Panggilan Q tersedia sekali per stage. Pembelian ulang memperpanjang durasi hingga 20 menit dan mempertahankan tingkat tertinggi yang sedang aktif.
+- Pompa menambah laju isi ulang 40% dari nilai dasar per level. Harga dan parameter efek adalah nilai awal untuk playtest. Relawan memakai sprite piksel prosedural dan kampanye memakai poster fiktif yang dirender oleh engine.
+
+
 | Tanggal | Keputusan | Alasan |
 |---|---|---|
 | 16/11/2026 | Semua aktor dengan aset Wowo/Tedduy, termasuk karakter sabotase stage 2, setinggi 1,3 kali Ranger; tekstur Scale2x dan satu jangkar untuk seluruh pose. Output build disatukan dan executable lama diperbarui | Ukuran 1,6 kali dinilai terlalu besar oleh pengguna; diperkecil dengan tetap mempertahankan tinggi di atas Ranger |

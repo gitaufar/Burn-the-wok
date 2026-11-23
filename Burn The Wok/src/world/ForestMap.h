@@ -57,6 +57,7 @@ public:
     bool HasTileInArea(const engine::Rect& area, TileType type) const;
     // Rectangle of tile (x, y) in world pixels.
     engine::Rect GetTileRect(int x, int y) const;
+    engine::Rect GetTreeSpriteRect(int x, int y, float aspect) const;
 
     engine::Rect GetBounds() const;  // in world pixels
     engine::Vec2 GetCenter() const;  // in world pixels

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameConfig.h"
+#include "systems/PointCalculator.h"
 #include "audio/SoundBank.h"
 
 #include <engine/core/Scene.h>
@@ -31,6 +32,10 @@ public:
         config::StageId stage = config::StageId::FirstFire;
         int rescued = 0;
         int rescueTarget = 0;
+        int wildlifePoints = 0;
+        float campaignTime = 0;
+        int stars = 0;
+        PointBreakdown points;
     };
 
     explicit ResultScene(Outcome outcome) : ResultScene(outcome, Summary{}) {}
@@ -53,6 +58,10 @@ private:
     engine::Rect m_treeSource, m_rangerSource;
     float m_time = 0.0f;
     int m_hovered = 0;
+    bool m_saveFailed = false;
+    bool m_storeUnlocked = false;
+    bool m_recorded = false;
+    int m_balance = 0;
 };
 
 } // namespace game

@@ -1,6 +1,9 @@
 #include "scenes/ResultScene.h"
 
 #include "GameConfig.h"
+#include "progress/SaveData.h"
+#include "art/FieldIcons.h"
+#include <limits>
 #include "art/PixelText.h"
 #include "scenes/MenuScene.h"
 #include "scenes/GameplayScene.h"
@@ -47,6 +50,28 @@ const char* ResultScene::ActionHint() const {
 }
 void ResultScene::OnEnter() {
     m_time = 0;
+    if (m_summary.hasStats && !m_recorded) {
+        auto& save = SaveData::Current();
+        auto next = save;
+        const int stage = static_cast<int>(m_summary.stage);
+        const bool won = m_outcome == Outcome::Win;
+        m_summary.stars = StarRating(won, m_summary.forestPercent, m_summary.rescued, m_summary.rescueTarget);
+        m_summary.points = CalculatePoints(m_summary.stage, won, save.cleared[stage], m_summary.rescued,
+            m_summary.wildlifePoints, m_summary.stars, m_summary.secondsLeft);
+        next.points += std::min(m_summary.points.Total(), std::numeric_limits<int>::max() - next.points);
+        next.campaignSeconds = m_summary.campaignTime;
+        if (won) {
+            m_storeUnlocked = stage == 0 && !save.cleared[0];
+            next.storeNew |= m_storeUnlocked;
+            next.cleared[stage] = true;
+            next.unlocked = std::max(next.unlocked, std::min(2, stage+1));
+            next.stars[stage] = std::max(next.stars[stage], m_summary.stars);
+        }
+        m_saveFailed = !save.Commit(next);
+        m_storeUnlocked &= !m_saveFailed;
+        m_balance = save.points;
+        m_recorded = true;
+    }
     m_hovered = 0;
     App().GetWindow().SetTitle(std::string(config::WindowTitle) + " - Laporan Patroli | " + ActionHint());
     App().GetWindow().SetClearColor(Color::FromHex(0x0C1C18));
@@ -57,7 +82,7 @@ void ResultScene::OnEnter() {
     m_rangerSource = ranger.GetContentBounds(16);
     m_ranger = std::make_unique<engine::Texture>(ranger);
     m_sfx = std::make_unique<SoundBank>(App().GetAudio());
-    m_sfx->Load({"win", "lose", "ui_click", "ui_hover"});
+    m_sfx->Load({"win", "lose", "ui_click", "ui_hover", "points_gain", "store_unlock", "stage_clear_star"});
     m_sfx->Play(m_outcome == Outcome::Win ? "win" : "lose", config::sound::Result);
 }
 void ResultScene::Activate(bool menu) {
@@ -70,7 +95,17 @@ void ResultScene::Activate(bool menu) {
     }
 }
 void ResultScene::Update(float dt) {
+    const float before = m_time;
     m_time += dt;
+    if (m_summary.hasStats) {
+        if (m_storeUnlocked && before < 1.75f && m_time >= 1.75f) m_sfx->Play("store_unlock", 0.6f);
+        for (int i = 0; i < m_summary.stars; ++i) {
+            const float at = 0.38f + 0.16f*i;
+            if (before < at && m_time >= at) m_sfx->Play("stage_clear_star", 0.28f);
+        }
+        if (m_summary.points.Total() && m_time >= 0.72f && m_time < 1.7f &&
+            static_cast<int>(m_time*10) != static_cast<int>(before*10)) m_sfx->Play("points_gain", 0.25f);
+    }
     const auto& input = App().GetInput();
     const Layout layout(App().GetWindow().GetSize());
     const auto mouse = input.GetMousePosition();
@@ -149,7 +184,25 @@ void ResultScene::Draw(float /*alpha*/) {
     batch.Draw(*m_ranger, layout.Box(219, 350, 126 * m_rangerSource.w / m_rangerSource.h, 126), m_rangerSource);
     rect(0, 506, 500, 94, Color::FromHex(0x13271F));
     text("CATATAN DARI LAPANGAN", 32, 526, 1.5f, Color::FromHex(0xA2B08E));
-    text(win ? "SETIAP POHON BERARTI." : "HUTAN INI MASIH MEMBUTUHKANMU.", 32, 552, 2, cream);
+    if (m_summary.hasStats) {
+        const auto& p = m_summary.points;
+        rect(29, 208, 442, 138, Color::FromHex(0x11271E, 235));
+        rect(29, 208, 3, 138, Color::FromHex(0x9DA76D));
+        const char* labels[] = {"MENANG", "SATWA", "BINTANG", "WAKTU", "PENYELAMAT"};
+        const int amounts[] = {p.clear, p.wildlife, p.stars, p.time, p.perfect};
+        const float progress = std::clamp((m_time-0.72f)/0.98f, 0.0f, 1.0f);
+        for (int i = 0; i < 5; ++i) {
+            text(labels[i], 47, 224 + 22.0f*i, 1.5f, cream);
+            text("+" + std::to_string(static_cast<int>(amounts[i]*progress)), 195, 224 + 22.0f*i, 1.5f, cream);
+        }
+        const auto leaf = layout.Box(265, 232, 0, 0);
+        art::DrawFieldIcon(batch, art::FieldIcon::Leaf, leaf.x, leaf.y, 3*s, Color::FromHex(0xF1CC73));
+        text("+" + std::to_string(static_cast<int>(p.Total()*progress)), 302, 230, 3, cream);
+        text("POIN PATROLI", 265, 274, 1.5f, cream);
+        text("SALDO " + std::to_string(m_balance), 265, 307, 1, cream);
+        text(m_saveFailed ? "GAGAL MENYIMPAN PROGRES" : m_storeUnlocked ? "TOKO PERLENGKAPAN TERBUKA" :
+             "SATWA TIBA " + std::to_string(m_summary.rescued) + "/" + std::to_string(m_summary.rescueTarget), 32, 552, 2, cream);
+    }
     rect(32, 28, 33, 35, Color::FromHex(0x8E9C6D));
     rect(46, 36, 5, 22, cream); rect(39, 42, 19, 5, cream); rect(42, 37, 13, 5, cream);
     text("POS PENJAGA", 80, 31, 2, cream);
@@ -194,9 +247,20 @@ void ResultScene::Draw(float /*alpha*/) {
         text("RINGKASAN LAPANGAN TIDAK TERSEDIA.", 564, 269, 1.5f, faded);
     }
     rect(564, 394, 492, 1, rule);
-    text(win ? "LANGKAH BERIKUTNYA" : "UNTUK PATROLI BERIKUTNYA", 564, 411, 1.2f, faded);
-    text(win ? (completed ? "TERIMA KASIH SUDAH MENJAGA HUTAN." : "SIAPKAN AIR. TANTANGAN BARU MENUNGGU.") :
-         "PADAMKAN API TERDEKAT, LALU DEKATI SATWA.", 564, 432, 1.4f, ink);
+    if (m_summary.hasStats) {
+        for (int i = 0; i < 3; ++i) {
+            const auto slot = layout.Box(564+i*36.0f, 416, 0, 0);
+            const bool earned = i < m_summary.stars && m_time >= 0.38f+0.16f*i;
+            art::DrawFieldIcon(batch, art::FieldIcon::Star, slot.x, slot.y, 3*s,
+                               earned ? Color::FromHex(0xA2702D) : rule);
+        }
+        text(std::to_string(m_summary.stars) + "/3 BINTANG", 690, 423, 1.5f, ink);
+        if (m_summary.campaignTime > 0) {
+            const auto spot = layout.Box(840, 419, 0, 0);
+            art::DrawFieldIcon(batch, art::FieldIcon::Megaphone, spot.x, spot.y, 1.6f*s, accent);
+            text("KAMPANYE " + CampaignClock(m_summary.campaignTime), 865, 423, 1.5f, ink);
+        }
+    }
     const bool hover = layout.Primary().Contains(App().GetInput().GetMousePosition());
     rect(564, 479, 492, 58, Color::FromHex(0xB7AB89));
     batch.DrawRect(layout.Primary(), hover ? Color::FromHex(0x48664A) : ink);

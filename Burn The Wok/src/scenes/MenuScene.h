@@ -11,8 +11,7 @@
 
 namespace game {
 
-// Main menu with a small built-in pixel label and a clickable start button.
-// Enter/Space/keypad Enter = start, Esc = quit.
+// Main menu, stage selection, and progress reset confirmation.
 class MenuScene : public engine::Scene {
 public:
     void OnEnter() override;
@@ -26,7 +25,12 @@ private:
     engine::Rect m_logoSource;
     float m_time = 0.0f;
     std::unique_ptr<SoundBank> m_sfx;
-    bool m_hovered = false; // mouse over the start button (for the hover sound)
+    int m_focus = 0;
+    int m_hovered = -1;
+    enum class Page { Main, Stages, Reset };
+    Page m_page = Page::Main;
+    bool m_resetFailed = false;
+    void Select(int index);
     std::shared_ptr<const engine::Sound> m_music;
     engine::AudioSystem::VoiceId m_voice = engine::AudioSystem::InvalidVoice;
 };

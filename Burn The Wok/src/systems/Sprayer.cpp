@@ -36,7 +36,7 @@ void Sprayer::Update(float dt, bool triggerHeld, engine::Vec2 nozzle, engine::Ve
         const float angle = std::atan2(aim.y, aim.x) + spread(m_rng) * Pi / 180.0f;
         const engine::Vec2 direction{std::cos(angle), std::sin(angle)};
         world.Spawn<WaterDrop>(nozzle, direction * config::DropSpeed * speedJitter(m_rng),
-                               config::DropLifetime);
+                               config::DropLifetime, m_power);
     }
     // Between drops (timer still positive) water is still flowing.
     m_spraying = m_spraying || tank.GetAmount() >= config::WaterPerDrop;

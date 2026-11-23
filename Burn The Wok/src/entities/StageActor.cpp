@@ -1,4 +1,5 @@
 #include "entities/StageActor.h"
+#include "entities/Volunteer.h"
 
 #include "art/SpriteDetail.h"
 #include "systems/FireSystem.h"
@@ -18,15 +19,28 @@ using engine::Vec2;
 using engine::Color;
 
 namespace {
-using Cell = StageActor::Cell;
+using namespace navigation;
 constexpr float Tile = config::TileSize;
-constexpr Cell Neighbors[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 // Reuse the Wowo set for the saboteur until the team has dedicated artwork.
 constexpr const char* ArtFolders[] = {"orangutan", "bekantan", "burung_hantu", "wowo", "wowo", "tedduy"};
 }
 
 StageActor::StageActor(Kind kind, Vec2 position)
     : Entity(position), m_kind(kind), m_actionTimer(kind == Kind::Saboteur ? 5.0f : 0.0f) {}
+
+void StageActor::SetPerch(Cell tree, Vec2 branch) {
+    m_perch = tree;
+    m_perchOffset = branch - m_position - Vec2{0, 2};
+    m_perchBlend = m_previousPerchBlend = 1.0f;
+}
+
+Vec2 StageActor::GetVisualPosition(float alpha) const {
+    return GetRenderPosition(alpha) + m_perchOffset * std::lerp(m_previousPerchBlend, m_perchBlend, alpha);
+}
+
+Vec2 StageActor::GetMapPosition(float alpha) const {
+    return m_perch ? CellCenter(*m_perch) : GetRenderPosition(alpha);
+}
 
 void StageActor::LoadArtwork() {
     constexpr const char* Directions[] = {"front", "back", "left", "right"};
@@ -60,7 +74,7 @@ void StageActor::LoadArtwork() {
         m_sources.fill(bounds);
         tallest = bounds.h;
     }
-    const float height = human ? config::AntagonistHeight : 20.0f;
+    const float height = human ? config::AntagonistHeight : (m_kind == Kind::Owl ? 15.0f : 20.0f);
     m_artScale = height / tallest;
 }
 
@@ -77,47 +91,12 @@ void StageActor::Draw(engine::SpriteBatch& batch, float alpha, float zoom) const
     const auto snap = [pixelsPerUnit](float value) {
         return std::round(value * pixelsPerUnit) / pixelsPerUnit;
     };
-    const Vec2 feet = GetRenderPosition(alpha);
+    const bool trapped = m_rescue == Rescue::Trapped || m_rescue == Rescue::Calming;
+    Vec2 feet = GetVisualPosition(alpha);
+    if (trapped) feet.x += std::round(std::sin(m_shakeTime * 42) * 0.8f);
     const float w = snap(source.w * m_artScale), h = snap(source.h * m_artScale);
-    const Color tint = m_rescue == Rescue::Panicked ? Color::FromHex(0xFFC88F) : Color::White();
+    const Color tint = trapped ? Color::FromHex(0xFFC88F) : Color::White();
     batch.Draw(*m_frames[frame], {snap(feet.x - w * 0.5f), snap(feet.y - h + 2), w, h}, source, tint);
-}
-
-Cell StageActor::ToCell(Vec2 position) {
-    return {static_cast<int>(std::floor(position.x / Tile)), static_cast<int>(std::floor(position.y / Tile))};
-}
-
-Vec2 StageActor::CellCenter(Cell cell) {
-    return {(cell.x + 0.5f) * Tile, (cell.y + 0.5f) * Tile};
-}
-
-std::vector<Cell> StageActor::FindRoute(const ForestMap& map, Cell start,
-                                         const std::function<bool(Cell)>& goal) {
-    if (map.IsSolid(start.x, start.y)) return {};
-    const int width = map.GetWidth();
-    const auto index = [width](Cell cell) { return cell.y * width + cell.x; };
-    std::vector<int> parent(width * map.GetHeight(), -1);
-    std::vector<Cell> queue{start};
-    parent[index(start)] = index(start);
-
-    for (std::size_t i = 0; i < queue.size(); ++i) {
-        const Cell cell = queue[i];
-        if (goal(cell)) {
-            std::vector<Cell> route;
-            for (int at = index(cell); at != index(start); at = parent[at]) {
-                route.push_back({at % width, at / width});
-            }
-            route.push_back(start);
-            return route;
-        }
-        for (const Cell offset : Neighbors) {
-            const Cell next{cell.x + offset.x, cell.y + offset.y};
-            if (map.IsSolid(next.x, next.y) || parent[index(next)] != -1) continue;
-            parent[index(next)] = index(cell);
-            queue.push_back(next);
-        }
-    }
-    return {};
 }
 
 engine::Rect StageActor::GetFeet() const {
@@ -146,27 +125,42 @@ void StageActor::FollowRoute(float speed, float dt, const ForestMap& map) {
     }
 }
 
-void StageActor::StepAnimal(float dt, const ForestMap& map, const engine::EntityWorld& world, Vec2 ranger) {
+bool StageActor::CanCalm() const {
+    return IsAnimal() && (m_rescue == Rescue::Waiting || m_rescue == Rescue::Trapped ||
+                          m_rescue == Rescue::Calming);
+}
+
+void StageActor::StepAnimal(float dt, const ForestMap& map, const engine::EntityWorld& world, bool calm) {
     if (m_rescue == Rescue::Saved || m_rescue == Rescue::Burned) return;
+    m_previousPerchBlend = m_perchBlend;
+    const bool dropping = m_perch && (m_rescue == Rescue::Fleeing ||
+        map.GetTile(m_perch->x, m_perch->y) != TileType::Tree);
+    if (dropping) {
+        const float descent = m_kind == Kind::Owl ? 0.48f : 0.33f;
+        m_perchBlend = std::max(0.0f, m_perchBlend - dt / descent);
+        m_walkTime = std::fmod(m_walkTime + dt, 0.4f);
+        if (m_perchBlend == 0.0f) m_perch.reset();
+    }
+    const Vec2 fireAnchor = m_perch ? CellCenter(*m_perch) : m_position;
     float nearestFire = 80.0f;
     world.ForEach<Fire>([&](const Fire& fire) {
-        nearestFire = std::min(nearestFire, (fire.GetHitArea().center - m_position).Length());
+        nearestFire = std::min(nearestFire, (fire.GetHitArea().center - fireAnchor).Length());
     });
     m_exposure = nearestFire < 19.0f ? m_exposure + dt : 0.0f;
     if (m_exposure >= 2.0f) {
         m_rescue = Rescue::Burned;
         return;
     }
-    if (m_rescue == Rescue::Waiting && ((ranger - m_position).Length() < 28.0f || nearestFire < 30.0f)) {
-        m_rescue = Rescue::Panicked;
-    }
-    if (m_rescue == Rescue::Panicked) {
-        m_panicTime += dt;
-        if (m_panicTime < 0.45f) return;
+    if (CanCalm()) {
+        m_shakeTime += dt;
+        m_calmTime = calm ? m_calmTime + dt : 0.0f;
+        m_rescue = calm ? Rescue::Calming : nearestFire < 30 ? Rescue::Trapped : Rescue::Waiting;
+        if (m_calmTime < CalmSeconds) return;
         m_rescue = Rescue::Fleeing;
+        return;
     }
-    if (m_rescue != Rescue::Fleeing) return;
 
+    if (dropping) return;
     const Cell shelter = ToCell(map.GetCenter());
     if (m_routeRevision != map.GetRevision()) {
         m_route = FindRoute(map, ToCell(m_position), [&](Cell cell) { return cell == shelter; });
@@ -218,6 +212,10 @@ void StageActor::StepSaboteur(float dt, ForestMap& map, engine::EntityWorld& wor
                 occupied |= engine::Overlaps(actor.GetFeet(), tile);
             }
         });
+        static_cast<const engine::EntityWorld&>(world).ForEach<Volunteer>([&](const Volunteer& volunteer) {
+            const auto feet = volunteer.GetPosition();
+            occupied |= engine::Overlaps({feet.x-4, feet.y-3, 8, 6}, tile);
+        });
         if (!occupied) {
             map.SetTile(target.x, target.y, TileType::Sawit);
             m_planting = true;
@@ -245,8 +243,8 @@ void StageActor::StepBoss(float dt, const ForestMap& map, Vec2 ranger) {
 }
 
 void StageActor::Step(float dt, ForestMap& map, engine::EntityWorld& world, FireSystem& fires,
-                       Vec2 ranger, const engine::Rect& rangerFeet) {
-    if (IsAnimal()) StepAnimal(dt, map, world, ranger);
+                       Vec2 ranger, const engine::Rect& rangerFeet, bool calm) {
+    if (IsAnimal()) StepAnimal(dt, map, world, calm);
     else if (m_kind == Kind::Saboteur) StepSaboteur(dt, map, world, fires, rangerFeet);
     else StepBoss(dt, map, ranger);
 }
