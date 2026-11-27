@@ -3,6 +3,7 @@
 #include "art/FieldIcons.h"
 #include "art/PixelText.h"
 #include "progress/SaveData.h"
+#include "scenes/LoadingScene.h"
 #include "scenes/MenuScene.h"
 
 #include <engine/core/Application.h>
@@ -132,7 +133,8 @@ void StoreScene::Update(float dt) {
     }
     m_notice = std::max(0.0f, m_notice-dt);
     if (escape || (click && layout.Back().Contains(mouse))) {
-        App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+        App().GetScenes().SwitchTo(std::make_unique<LoadingScene>(
+            [] { return std::make_unique<MenuScene>(); }, "KEMBALI KE POS JAGA"));
         return;
     }
     const int previous = m_selected;

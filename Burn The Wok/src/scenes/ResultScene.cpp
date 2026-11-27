@@ -7,7 +7,7 @@
 #include "systems/StarRating.h"
 #include "art/PixelText.h"
 #include "scenes/MenuScene.h"
-#include "scenes/GameplayScene.h"
+#include "scenes/LoadingScene.h"
 #include <engine/core/Application.h>
 #include <engine/graphics/Camera2D.h>
 #include <engine/graphics/Image.h>
@@ -88,11 +88,12 @@ void ResultScene::OnEnter() {
 }
 void ResultScene::Activate(bool menu) {
     m_sfx->Play("ui_click", config::sound::UiClick);
-    if (menu || ReturnsToMenu()) App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+    if (menu || ReturnsToMenu()) App().GetScenes().SwitchTo(std::make_unique<LoadingScene>(
+            [] { return std::make_unique<MenuScene>(); }, "KEMBALI KE POS JAGA"));
     else {
         auto stage = m_summary.stage;
         if (m_outcome == Outcome::Win) stage = static_cast<config::StageId>(static_cast<int>(stage) + 1);
-        App().GetScenes().SwitchTo(std::make_unique<GameplayScene>(stage));
+        App().GetScenes().SwitchTo(LoadStage(stage));
     }
 }
 void ResultScene::Update(float dt) {

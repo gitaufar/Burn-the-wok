@@ -10,6 +10,7 @@
 #include "entities/Fire.h"
 #include "entities/Particle.h"
 #include "entities/WaterDrop.h"
+#include "scenes/LoadingScene.h"
 #include "scenes/MenuScene.h"
 #include "scenes/ResultScene.h"
 
@@ -36,6 +37,12 @@ using navigation::CellCenter;
 using navigation::FindRoute;
 
 namespace {
+// The result screen, behind a short loading screen.
+std::unique_ptr<engine::Scene> LoadReport(ResultScene::Outcome outcome, ResultScene::Summary summary = {}) {
+    return std::make_unique<LoadingScene>(
+        [outcome, summary] { return std::make_unique<ResultScene>(outcome, summary); },
+        "MENYUSUN LAPORAN PATROLI");
+}
 // The forest has its own viewport. HUD panels never cover playable terrain.
 StageActor* RescueTarget(engine::EntityWorld& world, Vec2 ranger) {
     StageActor* closest = nullptr;
@@ -262,11 +269,11 @@ void GameplayScene::Update(float dt) {
     std::erase_if(m_popups, [](const RescuePopup& popup) { return popup.age >= 1.2f; });
     // Debug shortcuts for checking the result screens.
     if (input.IsKeyPressed(Key::F1)) {
-        App().GetScenes().SwitchTo(std::make_unique<ResultScene>(ResultScene::Outcome::Win));
+        App().GetScenes().SwitchTo(LoadReport(ResultScene::Outcome::Win));
         return;
     }
     if (input.IsKeyPressed(Key::F2)) {
-        App().GetScenes().SwitchTo(std::make_unique<ResultScene>(ResultScene::Outcome::Lose));
+        App().GetScenes().SwitchTo(LoadReport(ResultScene::Outcome::Lose));
         return;
     }
 
@@ -384,9 +391,10 @@ void GameplayScene::UpdatePause() {
         App().GetAudio().SetPaused(false);
         m_sfx->Play("pause_out", config::sound::UiClick);
     } else if (m_pauseSelection == 1) {
-        App().GetScenes().SwitchTo(std::make_unique<GameplayScene>(m_stage));
+        App().GetScenes().SwitchTo(LoadStage(m_stage));
     } else {
-        App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+        App().GetScenes().SwitchTo(std::make_unique<LoadingScene>(
+            [] { return std::make_unique<MenuScene>(); }, "KEMBALI KE POS JAGA"));
     }
 }
 
@@ -551,7 +559,7 @@ void GameplayScene::FinishStage() {
     const auto result = m_rules.GetOutcome() == StageOutcome::Won ? ResultScene::Outcome::Win
                                                                   : ResultScene::Outcome::Lose;
     m_reportQueued = true;
-    App().GetScenes().SwitchTo(std::make_unique<ResultScene>(result, std::move(summary)));
+    App().GetScenes().SwitchTo(LoadReport(result, std::move(summary)));
 }
 
 void GameplayScene::RebuildMinimap() {

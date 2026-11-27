@@ -120,6 +120,8 @@ Status Iterasi 10: kode konfigurasi, progression, retry, sabotase, dan boss dasa
 
 **DoD:** gim terlihat dan terdengar utuh, siap diuji.
 
+Layar loading 27/11/2026: `scenes/LoadingScene` tampil saat gim dibuka, intro ke menu, menu ke stage/toko, toko/pause/hasil ke menu, ulangi/lanjut stage, dan stage ke laporan. Isinya Ranger yang berjalan di bar menuju api plus teks status; sebelum stage ditambah "surat tugas" (nama stage, waktu, jumlah api, target satwa) dan tips, bisa dilewati dengan Spasi/Enter/klik. Bar berjalan dengan durasi tetap (1,6 detik untuk stage, 0,6 detik lainnya), **bukan** progres pemuatan sebenarnya; selama aset dimuat gambar terakhir diam. Penutup intro dipercepat (fade 3,2 ke 1,6 detik, lewati 0,9 ke 0,4 detik, jeda hitam 0,9 ke 0,15 detik). Latar hutan dipindah ke `art/ForestBackdrop.h`. Build Debug dan Release Windows berhasil; screenshot diperiksa untuk surat tugas stage 1 dan layar intro ke menu. Temuan: pemuatan di build Debug jauh lebih lambat (stage sekitar 8 detik) daripada Release (sekitar 1 detik). Belum diperiksa visual: stage 2-3, toko, ukuran jendela lain, dan build Linux.
+
 ## Tahap 7 — Play testing & finalisasi (30/11)
 
 - [ ] Uji ke teman sekelas, catat masukan
