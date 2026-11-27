@@ -178,7 +178,10 @@ void LoadingScene::Draw(float /*alpha*/) {
     const float messageWidth = ((message.size() + 3) * 6.0f - 1.0f) * 2.0f;
     art::DrawPixelText(batch, message + std::string(1 + static_cast<int>(m_time / 0.2f) % 3, '.'),
                        c.x - messageWidth * 0.5f * s, c.y + (TrailY + 40) * s, 2 * s, Cream);
-    if (m_stage) DrawCentered(batch, "SPASI / KLIK UNTUK LEWATI", c.x, c.y + 300 * s, 1.5f * s, Shade);
+    // Below one screen pixel per font pixel the small hint would break up, so it stops shrinking.
+    if (m_stage) {
+        DrawCentered(batch, "SPASI / KLIK UNTUK LEWATI", c.x, c.y + 300 * s, std::max(1.0f, 1.5f * s), Shade);
+    }
 
     // Fade in from the dark forest.
     const float cover = 1.0f - std::clamp(m_time / FadeSeconds, 0.0f, 1.0f);
