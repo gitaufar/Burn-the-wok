@@ -2,10 +2,11 @@
 #include "scenes/StoreScene.h"
 #include "progress/SaveData.h"
 #include "art/FieldIcons.h"
+#include "art/ForestBackdrop.h"
 
 #include "GameConfig.h"
 #include "art/PixelText.h"
-#include "scenes/GameplayScene.h"
+#include "scenes/LoadingScene.h"
 
 #include <engine/core/Application.h>
 #include <engine/core/Log.h>
@@ -34,16 +35,6 @@ engine::Rect MenuButton(engine::Vec2 size, int index) {
     const auto c = size * 0.5f;
     const float s = MenuScale(size);
     return {c.x+90*s, c.y+(126+index*37)*s, 350*s, 32*s};
-}
-
-void DrawForestTree(engine::SpriteBatch& batch, float x, float ground, float height,
-                    float s, Color color) {
-    const float width = height * 0.65f;
-    batch.DrawRect({x - width * 0.08f, ground - height, width * 0.16f, height}, color);
-    batch.DrawRect({x - width * 0.50f, ground - height * 0.88f, width, height * 0.34f}, color);
-    batch.DrawRect({x - width * 0.38f, ground - height * 1.02f, width * 0.76f, height * 0.28f}, color);
-    batch.DrawRect({x - width * 0.22f, ground - height * 1.10f, width * 0.44f, height * 0.20f}, color);
-    batch.DrawRect({x - width * 0.58f, ground - height * 0.69f, width * 1.16f, 18.0f * s}, color);
 }
 
 } // namespace
@@ -133,9 +124,10 @@ void MenuScene::Select(int index) {
         m_resetFailed = false;
     } else if (m_page == Page::Stages || index == 0) {
         const int stage = m_page == Page::Stages ? index : save.unlocked;
-        App().GetScenes().SwitchTo(std::make_unique<GameplayScene>(static_cast<config::StageId>(stage)));
+        App().GetScenes().SwitchTo(LoadStage(static_cast<config::StageId>(stage)));
     } else if (index == 2) {
-        App().GetScenes().SwitchTo(std::make_unique<StoreScene>());
+        App().GetScenes().SwitchTo(std::make_unique<LoadingScene>(
+            [] { return std::make_unique<StoreScene>(); }, "MEMBUKA GUDANG"));
     } else {
         m_page = index == 1 ? Page::Stages : Page::Reset;
         m_focus = 0;
@@ -157,26 +149,11 @@ void MenuScene::Draw(float /*alpha*/) {
     batch.Begin(camera.GetViewProjection());
 
     // A forest backdrop with a warm clearing keeps the fiery emblem in focus.
-    for (int i = 0; i < 48; ++i) {
-        const float t = static_cast<float>(i) / 47.0f;
-        batch.DrawRect({0.0f, size.y * i / 48.0f, size.x, size.y / 48.0f + 1.0f},
-            {static_cast<std::uint8_t>(7 + 7 * t), static_cast<std::uint8_t>(20 + 16 * t),
-             static_cast<std::uint8_t>(17 + 9 * t), 255});
-    }
+    art::DrawForestSky(batch, size);
     batch.Draw(*m_glow, {c.x - 560.0f * s, c.y - 370.0f * s, 1120.0f * s, 700.0f * s},
                Color::FromHex(0x738650));
 
-    for (int layer = 0; layer < 2; ++layer) {
-        const float spacing = (layer == 0 ? 105.0f : 155.0f) * s;
-        const Color color = Color::FromHex(layer == 0 ? 0x102F27 : 0x091D18);
-        for (int i = 0; i * spacing < size.x + spacing; ++i) {
-            const float x = i * spacing + ((layer == 0) ? 0.0f : 37.0f * s);
-            const float height = (180.0f + static_cast<float>((i * 71 + layer * 43) % 120)) * s;
-            DrawForestTree(batch, x, ground + layer * 34.0f * s, height, s, color);
-        }
-    }
-    batch.DrawRect({0.0f, ground + 34.0f * s, size.x,
-                    std::max(0.0f, size.y - ground - 34.0f * s)}, Color::FromHex(0x091D18));
+    art::DrawForestSilhouettes(batch, size, ground, s);
 
     for (int i = 0; i < 16; ++i) {
         const float progress = std::fmod(m_time * (0.045f + (i % 5) * 0.008f) + i * 0.137f, 1.0f);

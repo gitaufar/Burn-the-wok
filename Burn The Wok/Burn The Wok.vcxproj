@@ -178,5 +178,8 @@
     <ClCompile Include="src\world\Navigation.cpp" />
     <ClInclude Include="src\scenes\StoreScene.h" />
     <ClCompile Include="src\scenes\StoreScene.cpp" />
+    <ClInclude Include="src\art\ForestBackdrop.h" />
+    <ClInclude Include="src\scenes\LoadingScene.h" />
+    <ClCompile Include="src\scenes\LoadingScene.cpp" />
   </ItemGroup>
 </Project>

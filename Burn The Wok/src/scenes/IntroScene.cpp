@@ -3,6 +3,7 @@
 
 #include "GameConfig.h"
 #include "art/PixelText.h"
+#include "scenes/LoadingScene.h"
 #include "scenes/MenuScene.h"
 
 #include <engine/core/Application.h>
@@ -34,9 +35,9 @@ const char* const MusicPath = "assets/audio/music/sad_intro.wav";
 constexpr float TitleDuration = 2.6f;     // seconds of picture alone before the narration starts, per slide
 constexpr float FadeInDuration = 2.2f;    // from black at the very start
 constexpr float SlideTransition = 1.9f;   // crossfade between slides
-constexpr float EndFadeDuration = 3.2f;   // closing fade to black
-constexpr float SkipFadeDuration = 0.9f;  // when the player presses Esc
-constexpr float EndHold = 0.9f;           // stay black for a moment before the menu
+constexpr float EndFadeDuration = 1.6f;   // closing fade to black
+constexpr float SkipFadeDuration = 0.4f;  // when the player presses Esc
+constexpr float EndHold = 0.15f;          // stay black for a moment before the menu
 constexpr float CharsPerSecond = 44.0f;   // typewriter speed
 constexpr float MusicVolume = 0.8f;
 
@@ -234,7 +235,8 @@ void IntroScene::BeginEnding(float fadeSeconds) {
 }
 
 void IntroScene::Finish() {
-    App().GetScenes().SwitchTo(std::make_unique<MenuScene>());
+    App().GetScenes().SwitchTo(std::make_unique<LoadingScene>(
+            [] { return std::make_unique<MenuScene>(); }, "MENUJU POS JAGA"));
 }
 
 void IntroScene::RequestAdvance() {

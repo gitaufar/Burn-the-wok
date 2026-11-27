@@ -170,5 +170,14 @@
     <ClCompile Include="src\scenes\StoreScene.cpp">
       <Filter>src\scenes</Filter>
     </ClCompile>
+    <ClInclude Include="src\art\ForestBackdrop.h">
+      <Filter>src\art</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scenes\LoadingScene.h">
+      <Filter>src\scenes</Filter>
+    </ClInclude>
+    <ClCompile Include="src\scenes\LoadingScene.cpp">
+      <Filter>src\scenes</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

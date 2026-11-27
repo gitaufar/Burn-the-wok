@@ -1,5 +1,6 @@
 #include "GameConfig.h"
 #include "scenes/IntroScene.h"
+#include "scenes/LoadingScene.h"
 #include "scenes/MenuScene.h"
 
 #include <engine/core/Application.h>
@@ -23,10 +24,11 @@ int main(int argc, char* argv[]) {
         config.height = game::config::WindowHeight;
 
         engine::Application app(config);
-        if (skipIntro) {
-            return app.Run(std::make_unique<game::MenuScene>());
-        }
-        return app.Run(std::make_unique<game::IntroScene>());
+        const game::LoadingScene::Factory first = [skipIntro]() -> std::unique_ptr<engine::Scene> {
+            if (skipIntro) return std::make_unique<game::MenuScene>();
+            return std::make_unique<game::IntroScene>();
+        };
+        return app.Run(std::make_unique<game::LoadingScene>(first, "MEMASUKI HUTAN"));
     } catch (const std::exception& e) {
         engine::ReportFatalError(e.what());
         return 1;

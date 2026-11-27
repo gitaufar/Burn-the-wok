@@ -50,6 +50,7 @@ add_executable(burn-the-wok
     "${GAME_SOURCE_DIR}/systems/Sprayer.cpp"
     "${GAME_SOURCE_DIR}/scenes/GameplayScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/IntroScene.cpp"
+    "${GAME_SOURCE_DIR}/scenes/LoadingScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/MenuScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/ResultScene.cpp"
     "${GAME_SOURCE_DIR}/scenes/StoreScene.cpp"
